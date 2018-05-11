@@ -2,8 +2,32 @@ import ply.lex as lex
 import sys
 import re
 
-# List of token names
-tokens = (
+# Lista de nombres de Tokens
+
+reserved={
+	'with' : 'TkWith',
+	'begin' : 'TkBegin',
+	'end' : 'TkEnd',
+	'int' : 'TkInt',
+	'bool' : 'TkBool',
+	'char' : 'TkChar',
+	'array' : 'TkArray',
+	'if' : 'TkIf',
+	'otherwise' : 'TkOtherwise',
+	'while' : 'TkWhile',
+	'read' : 'TkRead',
+	'var' : 'TkVar',
+	'for' : 'TkFor',
+	'from' : 'TkFrom',
+	'to' : 'TkTo',
+	'step' : 'TkStep',
+	'print' : 'TkPrint',
+	'true' : 'TkTrue',
+	'false' : 'TkFalse',
+	'not' : 'TkNegacion'
+}
+
+tokens = [
 	'TkComa',
 	'TkPunto',
 	'TkDosPuntos',
@@ -22,7 +46,6 @@ tokens = (
 	'TkMod',
 	'TkConjuncion',
 	'TkDisyuncion',
-	'TkNegacion',
 	'TkMenor',
 	'TkMenorIgual',
 	'TkMayor',
@@ -33,10 +56,14 @@ tokens = (
 	'TkValorAscii',
 	'TkConcatenacion',
 	'TkShift',
-	'NUMBER'
-)
+	'TkNum',
+	'TkId',
+	'error',
+	'TkCaracter'
+] + list(reserved.values())
 
-# Regular expression rules for simple tokens
+
+# Definiciones de los tokens
 t_TkComa  = r','
 t_TkPunto = r'\.'
 t_TkDosPuntos = r':'
@@ -66,15 +93,16 @@ t_TkAnteriorCar = r'--'
 t_TkValorAscii  = r'\#'
 t_TkConcatenacion = r'::'
 t_TkShift = r'\$'
+#t_TkCaracter = r'[a-zA-Z]?<![0-9]'
 
 
-# A regular expression rule with some action code
-def t_NUMBER(t):
+# Regla para identificar numeros
+def t_TkNum(t):
     r'\d+'
     t.value = int(t.value)    
     return t
 
-# Define a rule so we can track line numbers
+# New line
 def t_newline(t):
     r'\n+'
     t.lexer.lineno += len(t.value)
@@ -87,14 +115,18 @@ def t_error(t):
     print("Illegal character '%s'" % t.value[0])
     t.lexer.skip(1)
 
+def t_TkId(t):
+    r'[a-zA-Z_][a-zA-Z_0-9]+'
+    t.type = reserved.get(t.value,'TkId')    # Check for reserved words
+    return t
+
 # Build the lexer
 lexer = lex.lex()
 
 # Test it out
-data = "3 # 4"
+data = "3 # 4 if not ifi nothing a\nalo\nhola%"
 
 # Give the lexer some input
-file=open
 lexer.input(data)
 
 # Tokenize
