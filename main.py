@@ -1,4 +1,4 @@
-import ply.ply.lex as lex
+import ply.lex as lex
 import sys
 import re
 
@@ -41,7 +41,7 @@ t_TkComa  = r','
 t_TkPunto = r'\.'
 t_TkDosPuntos = r':'
 t_TkParAbre = r'\('
-#t_TkParCierra = r')'
+t_TkParCierra = r'\)'
 t_TkCorcheteAbre  = r'\['
 t_TkCorcheteCierra  = r'\]'
 t_TkLlaveAbre = r'\{'
@@ -53,8 +53,8 @@ t_TkResta = r'-'
 t_TkMult  = r'\*'
 t_TkDiv = r'/'
 t_TkMod = r'%'
-#t_TkConjuncion  = r'[/][\]'
-t_TkDisyuncion  = r'[\][/]'
+#t_TkConjuncion  = r"/\\"
+#t_TkDisyuncion  = r"\/"
 t_TkNegacion  = r'not'
 t_TkMenor = r'<'
 t_TkMenorIgual  = r'<='
@@ -63,7 +63,7 @@ t_TkMayorIgual  = r'>='
 t_TkIgual = r'='
 t_TkSiguienteCar  = r'[+][+]'
 t_TkAnteriorCar = r'--'
-#t_TkValorAscii  = r'#'
+t_TkValorAscii  = r'\#'
 t_TkConcatenacion = r'::'
 t_TkShift = r'\$'
 
@@ -91,11 +91,10 @@ def t_error(t):
 lexer = lex.lex()
 
 # Test it out
-data = '''
-3 $ 4
-'''
+data = "3 # 4"
 
 # Give the lexer some input
+file=open
 lexer.input(data)
 
 # Tokenize
