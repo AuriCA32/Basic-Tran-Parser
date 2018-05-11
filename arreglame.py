@@ -1,11 +1,14 @@
 
 def inicio(stringlargo):
 	#file = open(“arregladito.txt”,”w+”) 
-	largo = stringlargo.split("\n")
+	#largo = stringlargo.split("\n")
+
+	"""
 	for i in largo:
 		#arreglame(i)
 		print("t_"+i)
-	#file.close()
+	#file.close()"""
+	crearTokenPalabraR(stringlargo)
 
 def arreglame (all):
 	arreglodesarreglado = all.split(" ")
@@ -15,37 +18,32 @@ def arreglame (all):
 		string += "	= r" + elemento
 		print(string)
 
+def crearTokenPalabraR (reservadas):
+	for i in reservadas:
+		print("'"+i+"' : 'Tk"+i.title()+"',")
+
 
 stringlargo='''
-TkComa  = r','
-TkPunto = r'.'
-TkDosPuntos = r':'
-TkParAbre = r'\('
-TkParCierra = r')'
-TkCorcheteAbre  = r'\['
-TkCorcheteCierra  = r'\]'
-TkLlaveAbre = r'\{'
-TkLlaveCierra = r'\}'
-TkHacer = r'->'
-TkAsignacion = r'<-'
-TkSuma  = r'\+'
-TkResta = r'-'
-TkMult  = r'\*'
-TkDiv = r'/'
-TkMod = r'%'
-TkConjuncion  = r'[/][\]'
-TkDisyuncion  = r'[\][/]'
-TkNegacion  = r'not'
-TkMenor = r'<'
-TkMenorIgual  = r'<='
-TkMayor = r'>'
-TkMayorIgual  = r'>='
-TkIgual = r'='
-TkSiguienteCar  = r'[\+][\+]'
-TkAnteriorCar = r'[-][-]'
-TkValorAscii  = r'#'
-TkConcatenacion = r'::'
-TkShift = r'$'
+with
+begin
+end
+int
+bool
+char
+array
+if
+otherwise
+while
+read
+var
+for
+from
+to
+step
+print
+true
+false
+not
 '''
 
-inicio(stringlargo)
+inicio(stringlargo.split("\n"))
