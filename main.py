@@ -94,6 +94,7 @@ t_TkValorAscii  = r'\#'
 t_TkConcatenacion = r'::'
 t_TkShift = r'\$'
 #t_TkCaracter = r'[a-zA-Z]?<![0-9]'
+t_TkCaracter = r'\'[^0-9 ]?\'' #0-9 ni espacio
 
 
 # Regla para identificar numeros
@@ -124,7 +125,7 @@ def t_TkId(t):
 lexer = lex.lex()
 
 # Test it out
-data = "3 # 4 if not ifi nothing a\nalo\nhola%"
+data = "3 # 4 if not ifi nothing 'a' '\t' ' ' \nalo\nhola%"
 
 # Give the lexer some input
 lexer.input(data)
