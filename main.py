@@ -161,8 +161,15 @@ def print_tokens_or_errors():
 
 #Lee un archivo y lo retorna como string
 def read_given_file(gfile):
-    file = open(gfile,"r")
-    return file.read()
+    try:
+        file = open(gfile,"r")
+        return file.read()
+    except IOError as e:
+        print("I/O error({0}): {1}".format(e.errno, e.strerror))
+        exit()
+    except:
+        print("Unexpected error:", sys.exc_info()[0])
+        exit()
 
 
 lexer = lex.lex()
