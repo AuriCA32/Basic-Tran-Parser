@@ -160,20 +160,18 @@ def print_tokens_or_errors():
 	        print(tokensList[i])
 
 #Lee un archivo y lo retorna como string
-def read_given_file():
-	pass								##############CAMBIAR
-	string=""+sys.argv[1]
-	return string
-
-#main del programa
-def main():
-	lexer=lex.lex()  #build lexer
-	data=read_given_file()   #feed the lexer the input given
-	while True:
-		tok = lexer.token()
-		if not tok: 
-			break      # No more input
-		listar_token(tok)
+def read_given_file():						#####CAMBIAR
+	pass
 
 
-main()
+#NOTA: prueba con "hola a" y veras que a te dara un error
+
+lexer = lex.lex()
+data = "4435+ jorfjo 'a' '\\' '\n'"
+lexer.input(data)
+while True:
+    tok = lexer.token()
+    if not tok: 
+        break      # No more input
+    listar_token(tok)
+print_tokens_or_errors()
