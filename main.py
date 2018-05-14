@@ -120,7 +120,7 @@ def t_error(t):
     t.lexer.skip(1)
 
 def t_TkId(t):
-    r'[a-zA-Z_][a-zA-Z_0-9]+'
+    r'[a-zA-Z][_a-zA-Z_0-9]*'
     t.type = reserved.get(t.value,'TkId')    # Check for reserved words
     return t
 
@@ -160,14 +160,14 @@ def print_tokens_or_errors():
 	        print(tokensList[i])
 
 #Lee un archivo y lo retorna como string
-def read_given_file():						#####CAMBIAR
-	pass
+def read_given_file(gfile):
+    file = open(gfile,"r")
+    return file.read()
 
-
-#NOTA: prueba con "hola a" y veras que a te dara un error
 
 lexer = lex.lex()
-data = "4435+ jorfjo 'a' '\\' '\n'"
+data=read_given_file(sys.argv[1])
+#data = "4435+ jorfjo aa_aaa 'a' '\\' '\n'"
 lexer.input(data)
 while True:
     tok = lexer.token()
