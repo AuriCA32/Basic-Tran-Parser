@@ -80,9 +80,8 @@ t_TkResta = r'-'
 t_TkMult  = r'\*'
 t_TkDiv = r'/'
 t_TkMod = r'%'
-#t_TkConjuncion  = r'/\\'
-#t_TkDisyuncion  = r'\/'
-t_TkNegacion  = r'not'
+t_TkConjuncion = r'/\\'
+t_TkDisyuncion  = r'\\/'
 t_TkMenor = r'<'
 t_TkMenorIgual  = r'<='
 t_TkMayor = r'>'
@@ -94,7 +93,7 @@ t_TkValorAscii  = r'\#'
 t_TkConcatenacion = r'::'
 t_TkShift = r'\$'
 #t_TkCaracter = r'[a-zA-Z]?<![0-9]'
-t_TkCaracter = r'\'[a-zA-Z]\'|\'[\t]\'|\'[\n]\'|\'[\']\'|\'[\\]\'' #0-9 ni espacio
+t_TkCaracter = r'[\'\"][a-zA-Z][\'\"]|[\'\"][\t][\'\"]|[\'\"][\n][\'\"]|[\'\"][\'][\'\"]|[\'\"][\\][\'\"]' #0-9 ni espacio
 
 
 # Regla para identificar numeros
@@ -129,7 +128,7 @@ def encontrar_col(linea, token):
 
 # Test it out
 data='''
-    3 # 4 if . true not ifi nothing 'a' '\t' '\n' '\'' '\\' 
+    /\\\/ 3 # 4 if . true not ifi nothing 'a' '\t' '\n' '\'' '\\' 
     alo
     hola%
     '''
