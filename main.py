@@ -3,12 +3,11 @@ import sys
 import re
 
 
-tokError=[] #Global, si esta vacio no hay errores
-tokensList=[]
+tokError=[] #Array para los tokens error, si esta vacio no hay errores
+tokensList=[] #Array para la lista de tokens
 
 
-# Lista de nombres de Tokens
-
+""" Lista de nombres de Tokens para palabras reservadas """
 reserved={
 	'with' : 'TkWith',
 	'begin' : 'TkBegin',
@@ -32,6 +31,7 @@ reserved={
 	'not' : 'TkNegacion'
 }
 
+""" Lista de nombres de Tokens """
 tokens = [
 	'TkComa',
 	'TkPunto',
@@ -68,7 +68,7 @@ tokens = [
 ] + list(reserved.values())
 
 
-# Definiciones de los tokens
+""" Definiciones de los tokens """
 t_TkComa  = r','
 t_TkPunto = r'\.'
 t_TkDosPuntos = r':'
@@ -99,37 +99,38 @@ t_TkConcatenacion = r'::'
 t_TkShift = r'\$'
 t_TkCaracter = r'[\'\"][a-zA-Z0-9][\'\"]|[\'\"][\t][\'\"]|[\'\"][\n][\'\"]|[\'\"][\'][\'\"]|[\'\"][\\][\'\"]' #0-9 ni espacio
 
-# A string containing ignored characters (spaces and tabs)
+""" Caracteres ignorados """
 t_ignore  = ' \t'
 
-# Regla para identificar numeros
 def t_TkNum(t):
+	""" Regla para identificar numeros """
     r'\d+'
     t.value = int(t.value)    
     return t
 
-# New line
 def t_newline(t):
+	""" Identifica una nueva linea. """
     r'\n+'
     t.lexer.lineno += len(t.value)
 
-# Error handling rule
 def t_error(t):
-    #Error: Caracter inesperado "!" en la fila 2, columna 20
+	""" Handler para errores. """
     tokError.append("Error: Caracter inesperado \"%s\"" % t.value[0] +" en la fila "+str(lexer.lineno)+", columna "+encontrar_col(data,t))
     t.lexer.skip(1)
 
 def t_TkId(t):
+	""" Regla para identificar numeros. """
     r'[a-zA-Z][_a-zA-Z_0-9]*'
-    t.type = reserved.get(t.value,'TkId')    # Check for reserved words
+    t.type = reserved.get(t.value,'TkId')    #Chequea palabras reservadas
     return t
 
-#Para encontrar columna
 def encontrar_col(linea, token):
+	""" Encuentra la columna para el input dado. """
     inicio_linea=linea.rfind('\n',0,token.lexpos) + 1
     return str((token.lexpos - inicio_linea) + 1)
 
 def get_especial(tok):
+	""" Identifica los caracteres especiales """
 	if (tok.value=='\'\n\''):
 		return '\''+'\\'+'n'+'\''
 	elif (tok.value=='\'\t\''):
@@ -137,8 +138,8 @@ def get_especial(tok):
 	else:
 		return tok.value
 
-#Para listar el string del token dependiendo de su valor
 def listar_token(tok):
+	""" Lista el string del token dependiendo de su valor """
 	if(reserved.get(tok.value)!=None): #Reserved Word
 		tokensList.append(tok.type+" "+str(lexer.lineno)+" "+encontrar_col(data,tok))
 	elif(tok.type=='TkId'): #Variables
@@ -150,8 +151,8 @@ def listar_token(tok):
 	else:
 		tokensList.append(tok.type+" "+str(lexer.lineno)+" "+encontrar_col(data,tok))
 
-#Para imprimir la lista de tokens o errores dependiendo del caso
 def print_tokens_or_errors():
+	""" Imprime la lista de tokens o errores dependiendo del caso """
 	if(len(tokError)>0):
 	    for i in range(len(tokError)):
 	        print(tokError[i])
@@ -159,8 +160,8 @@ def print_tokens_or_errors():
 	    for i in range(len(tokensList)):
 	        print(tokensList[i])
 
-#Lee un archivo y lo retorna como string
 def read_given_file(gfile):
+	""" Lee un archivo y retorna su contenido como string """
     try:
         file = open(gfile,"r")
         return file.read()
@@ -172,9 +173,9 @@ def read_given_file(gfile):
         exit()
 
 
+""" Implementacion del Lexer """
 lexer = lex.lex()
 data=read_given_file(sys.argv[1])
-#data = "4435+ jorfjo aa_aaa 'a' '\\' '\n'"
 lexer.input(data)
 while True:
     tok = lexer.token()
