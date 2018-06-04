@@ -187,6 +187,16 @@ def read_given_file(gfile):
 ########### Funciones para el parser ###########
 ################################################
 
+#Crea el arbol
+class Node:
+	def __init__(self,type,children=None,leaf=None):
+		self.type = type
+		if children:
+              self.children = children
+         else:
+			self.children = [ ]
+		self.leaf = leaf
+
 #Inicio declaraciones de variables
 def p_with(p):
 	'''with : TkWith declaracionVar'''
@@ -242,10 +252,7 @@ def p_type_char(p):
 	'''typeChar : TkChar declaracionVar'''
 
 def p_begin(p):
-	'''begin: TkBegin instruccion TkEnd'''
-
-def p_asignacion(p):
-	'''asignacion : TkId exp'''
+	'''begin: TkBegin cond'''
 
 def p_cond(p):
 	'''cond : if
@@ -254,7 +261,11 @@ def p_cond(p):
 			| read
 			| print
 			| TkParAbre exp TkParCierra
-			| TkLlaveAbre exp TkLlaveCierra'''
+			| exp
+			| with
+			| TkLlaveAbre cond TkLlaveCierra
+			| TkId TkAsignacion exp
+			| TkEnd'''
 
 def p_exp(p):
 	'''exp : char
@@ -263,29 +274,66 @@ def p_exp(p):
 		   | booleana'''
 
 def p_if(p):
-	'''if : '''
+	'''if : TkIf relacionales TkHacer cond TkOtherwise TkHacer cond TkEnd
+		  | TkIf relacionales TkHacer cond TkEnd'''
 
 def p_while(p):
-	'''while : '''
+	'''while : TkWhile relacionales TkHacer cond TkEnd'''
 
 def p_for(p):
-	'''for : '''
+	'''for : TkFor TkId TkFrom TkNum TkTo TkNum TkStep TkNum TkHacer cond TkEnd
+		   | TkFor TkId TkFrom TkNum TkTo TkNum TkHacer cond TkEnd'''
+
+def p_read(p):
+	'''read : TkRead TkId'''
+
+def p_print(p):
+	'''print : TkPrint exp'''
 
 def p_aritmetica(p):
-	'''aritmetica : '''
+	'''aritmetica : TkId TkPunto TkNum
+				  | TkId
+				  | TkNum
+				  | TkId TkCorcheteAbre TkNum TkCorcheteCierra
+				  | aritmetica TkSuma aritmetica
+				  | aritmetica TkResta aritmetica
+				  | aritmetica TkMult aritmetica
+				  | aritmetica TkDiv aritmetica
+				  | aritmetica TkMod aritmetica
+				  | TkResta TkId''' #menos unario
 
 def p_booleana(p):
-	'''booleana : '''
+	'''booleana : TkTrue
+				| TkFalse
+				| TkId TkCorcheteAbre TkNum TkCorcheteCierra
+				| TkId
+				| booleana TkConjuncion booleana
+				| booleana TkDisyuncion booleana
+				| booleana TkIgual booleana
+				| booleana TkDiferente booleana
+				| TkNegacion booleana'''
 
 def p_array(p):
-	'''array : '''
+	'''array : TkId TkConcatenacion TkId
+			| TkShift TkId'''
 
 def p_char(p):
-	'''char : '''
+	'''char : TkCaracter TkSiguienteCar
+			| TkCaracter TkAnteriorCar
+			| TkValorAscii TkCaracter'''
 
 def p_relacionales(p):
-	'''relacionales : '''
+	'''relacionales : booleana
+					| aritmetica TkMenor aritmetica
+					| aritmetica TkMenorIgual aritmetica
+					| aritmetica TkMayor aritmetica
+					| aritmetica TkMayorIgual aritmetica
+					| aritmetica TkIgual aritmetica
+					| aritmetica TkDiferente aritmetica'''
 
+# Error rule for syntax errors
+def p_error(p):
+    print("Syntax error in input")
 
 #Inicializacion del lexer
 lexer = lex.lex()
