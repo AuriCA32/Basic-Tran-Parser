@@ -245,7 +245,46 @@ def p_begin(p):
 	'''begin: TkBegin instruccion TkEnd'''
 
 def p_asignacion(p):
-	'''exp : '''
+	'''asignacion : TkId exp'''
+
+def p_cond(p):
+	'''cond : if
+			| while
+			| for
+			| read
+			| print
+			| TkParAbre exp TkParCierra
+			| TkLlaveAbre exp TkLlaveCierra'''
+
+def p_exp(p):
+	'''exp : char
+		   | aritmetica
+		   | array
+		   | booleana'''
+
+def p_if(p):
+	'''if : '''
+
+def p_while(p):
+	'''while : '''
+
+def p_for(p):
+	'''for : '''
+
+def p_aritmetica(p):
+	'''aritmetica : '''
+
+def p_booleana(p):
+	'''booleana : '''
+
+def p_array(p):
+	'''array : '''
+
+def p_char(p):
+	'''char : '''
+
+def p_relacionales(p):
+	'''relacionales : '''
 
 
 #Inicializacion del lexer
