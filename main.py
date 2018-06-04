@@ -68,7 +68,8 @@ tokens = [
 	'TkNum',
 	'TkId',
 	#'TKerror',
-	'TkCaracter'
+	'TkCaracter',
+	'TkMenos'
 ] + list(reserved.values())
 
 
@@ -87,6 +88,7 @@ t_TkHacer = r'->'
 t_TkAsignacion = r'<-'
 t_TkSuma  = r'\+'
 t_TkResta = r'-'
+t_TkMenos = r'-'
 t_TkMult  = r'\*'
 t_TkDiv = r'/'
 t_TkMod = r'%'
@@ -197,6 +199,17 @@ class Node:
 			self.children = [ ]
 		self.leaf = leaf
 
+#Precedencia de variables, menor precendencia arriba
+precedence=(
+	('left', 'TkMayor', 'TkMenor', 'TkMayorIgual', 'TkMenorIgual', 'TkIgual','TkDiferente'),
+	('left', 'TkSuma', 'TkResta'),
+	('left', 'TkMult', 'TkDiv', 'TkMod'),
+	('left', 'TkConjuncion', 'TkDisyuncion'),
+	('right', 'TkMenos', 'TkNegacion')
+	)
+
+######FALTAN DOS START, UNO PARA WITH Y UNO PARA BEGIN
+
 #Inicio declaraciones de variables
 def p_with(p):
 	'''with : TkWith declaracionVar'''
@@ -261,13 +274,13 @@ def p_cond(p):
 	'''cond : if
 			| while
 			| for
-			| read
-			| print
+			| read TkPuntoComa
+			| print TkPuntoComa
 			| TkParAbre exp TkParCierra
-			| exp
+			| exp TkPuntoComa
 			| with
 			| TkLlaveAbre cond TkLlaveCierra
-			| TkId TkAsignacion exp
+			| TkId TkAsignacion exp TkPuntoComa
 			| TkEnd'''
 
 def p_exp(p):
@@ -303,7 +316,7 @@ def p_aritmetica(p):
 				  | aritmetica TkMult aritmetica
 				  | aritmetica TkDiv aritmetica
 				  | aritmetica TkMod aritmetica
-				  | TkResta TkId''' #menos unario
+				  | TkMenos TkId''' #menos unario
 
 def p_booleana(p):
 	'''booleana : TkTrue
@@ -351,4 +364,4 @@ print_tokens_or_errors()
 
 #Inicializacion del parser
 yacc.yacc()
-#yacc.parse(data)
+yacc.parse(data)
