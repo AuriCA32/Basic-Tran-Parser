@@ -68,7 +68,8 @@ tokens = [
 	'TkNum',
 	'TkId',
 	#'TKerror',
-	'TkCaracter'
+	'TkCaracter',
+	'TkMenos'
 ] + list(reserved.values())
 
 
@@ -87,6 +88,7 @@ t_TkHacer = r'->'
 t_TkAsignacion = r'<-'
 t_TkSuma  = r'\+'
 t_TkResta = r'-'
+t_TkMenos = r'-'
 t_TkMult  = r'\*'
 t_TkDiv = r'/'
 t_TkMod = r'%'
@@ -187,6 +189,15 @@ def read_given_file(gfile):
 ########### Funciones para el parser ###########
 ################################################
 
+#Precedencia de variables, menor precendencia arriba
+precedence=(
+	('left', 'TkMayor', 'TkMenor', 'TkMayorIgual', 'TkMenorIgual', 'TkIgual','TkDiferente'),
+	('left', 'TkSuma', 'TkResta'),
+	('left', 'TkMult', 'TkDiv', 'TkMod'),
+	('left', 'TkConjuncion', 'TkDisyuncion'),
+	('right', 'TkMenos', 'TkNegacion')
+	)
+
 #Crea el arbol
 class Node:
 	def __init__(self,type,children=None,leaf=None):
@@ -245,25 +256,28 @@ def p_type(p):
 			| typeChar'''
 
 def p_type_int(p):
-	'''typeInt : TkInt declaracionVar'''
+	'''typeInt : TkInt declaracionVar
+			   | TkInt'''
 
 def p_type_bool(p):
-	'''typeBool : TkBool declaracionVar'''
+	'''typeBool : TkBool declaracionVar
+				| TkBool'''
 
 def p_type_char(p):	
-	'''typeChar : TkChar declaracionVar'''
+	'''typeChar : TkChar declaracionVar
+				| TkChar'''
 
 def p_cond(p):
 	'''cond : if
 			| while
 			| for
-			| read
-			| print
+			| read TkPuntoComa
+			| print TkPuntoComa
 			| TkParAbre exp TkParCierra
-			| exp
+			| exp TkPuntoComa
 			| with
 			| TkLlaveAbre cond TkLlaveCierra
-			| TkId TkAsignacion exp
+			| TkId TkAsignacion exp TkPuntoComa
 			| TkEnd'''
 
 def p_exp(p):
@@ -299,7 +313,7 @@ def p_aritmetica(p):
 				  | aritmetica TkMult aritmetica
 				  | aritmetica TkDiv aritmetica
 				  | aritmetica TkMod aritmetica
-				  | TkResta TkId''' #menos unario
+				  | TkMenos TkId''' #menos unario
 
 def p_booleana(p):
 	'''booleana : TkTrue
@@ -347,4 +361,4 @@ print_tokens_or_errors()
 
 #Inicializacion del parser
 yacc.yacc()
-#yacc.parse(data)
+yacc.parse(data)
