@@ -115,30 +115,30 @@ t_ignore  = ' \t'
 
 # Regla para identificar numeros
 def t_TkNum(t):
-    r'\d+'
-    t.value = int(t.value)    
-    return t
+	r'\d+'
+	t.value = int(t.value)    
+	return t
 
 # Identifica una nueva linea
 def t_newline(t):
-    r'\n+'
-    t.lexer.lineno += len(t.value)
+	r'\n+'
+	t.lexer.lineno += len(t.value)
 
 # Handler para errores
 def t_error(t):
-    tokError.append("Error: Caracter inesperado \"%s\"" % t.value[0] +" en la fila "+str(lexer.lineno)+", columna "+encontrar_col(data,t))
-    t.lexer.skip(1)
+	tokError.append("Error: Caracter inesperado \"%s\"" % t.value[0] +" en la fila "+str(lexer.lineno)+", columna "+encontrar_col(data,t))
+	t.lexer.skip(1)
 
 # Regla para identificadores
 def t_TkId(t):
-    r'[a-zA-Z][_a-zA-Z_0-9]*'
-    t.type = reserved.get(t.value,'TkId')    # Check for reserved words
-    return t
+	r'[a-zA-Z][_a-zA-Z_0-9]*'
+	t.type = reserved.get(t.value,'TkId')    # Check for reserved words
+	return t
 
 #Funcion para encontrar columna en el input del lexer
 def encontrar_col(linea, token):
-    inicio_linea=linea.rfind('\n',0,token.lexpos) + 1
-    return str((token.lexpos - inicio_linea) + 1)
+	inicio_linea=linea.rfind('\n',0,token.lexpos) + 1
+	return str((token.lexpos - inicio_linea) + 1)
 
 #Funcion auxiliar para imprimir caracteres '\n' y '\t'
 def get_especial(tok):
@@ -165,23 +165,23 @@ def listar_token(tok):
 #Funcion para imprimir la lista de tokens o errores dependiendo del caso
 def print_tokens_or_errors():
 	if(len(tokError)>0):
-	    for i in range(len(tokError)):
-	        print(tokError[i])
+		for i in range(len(tokError)):
+			print(tokError[i])
 	else:
-	    for i in range(len(tokensList)):
-	        print(tokensList[i])
+		for i in range(len(tokensList)):
+			print(tokensList[i])
 
 #Funcion que lee un archivo y lo retorna como string
 def read_given_file(gfile):
-    try:
-        file = open(gfile,"r")
-        return file.read()
-    except IOError as e:
-        print("I/O error({0}): {1}".format(e.errno, e.strerror))
-        exit()
-    except:
-        print("Unexpected error:", sys.exc_info()[0])
-        exit()
+	try:
+		file = open(gfile,"r")
+		return file.read()
+	except IOError as e:
+		print("I/O error({0}): {1}".format(e.errno, e.strerror))
+		exit()
+	except:
+		print("Unexpected error:", sys.exc_info()[0])
+		exit()
 
 ################################################
 ########### Funciones para el parser ###########
@@ -192,8 +192,8 @@ class Node:
 	def __init__(self,type,children=None,leaf=None):
 		self.type = type
 		if children:
-              self.children = children
-         else:
+			self.children = children
+		else:
 			self.children = [ ]
 		self.leaf = leaf
 
@@ -252,7 +252,7 @@ def p_type_char(p):
 	'''typeChar : TkChar declaracionVar'''
 
 def p_begin(p):
-	'''begin: TkBegin cond'''
+	'''begin : TkBegin cond'''
 
 def p_cond(p):
 	'''cond : if
@@ -333,17 +333,19 @@ def p_relacionales(p):
 
 # Error rule for syntax errors
 def p_error(p):
-    print("Syntax error in input")
+	print("Syntax error in input")
 
 #Inicializacion del lexer
 lexer = lex.lex()
 data=read_given_file(sys.argv[1])
 lexer.input(data)
 while True:
-    tok = lexer.token()
-    if not tok: 
-        break      
-    listar_token(tok)
+	tok = lexer.token()
+	if not tok: 
+		break      
+	listar_token(tok)
 print_tokens_or_errors()
 
 #Inicializacion del parser
+yacc.yacc()
+yacc.parse(data)
