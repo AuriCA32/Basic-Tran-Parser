@@ -67,7 +67,7 @@ tokens = [
 	'TkShift',
 	'TkNum',
 	'TkId',
-	'error',
+	#'TKerror',
 	'TkCaracter'
 ] + list(reserved.values())
 
@@ -213,7 +213,7 @@ def p_declaracion_id(p):
 					 | TkId TkDosPuntos type
 					 | TkId TkAsignacion TkNum TkComa declaracionIdNum
 					 | TkId TkAsignacion TkTrue TkComa declaracionIdBool
-					 | TkId TkAsignacion TkTrue TkComa declaracionIdChar'''
+					 | TkId TkAsignacion TkCaracter TkComa declaracionIdChar'''
 
 #declaracion de id tipo int
 def p_declaracion_idNum(p):
@@ -238,9 +238,12 @@ def p_declaracion_idBool(p):
 #declaracion de arreglos
 def p_declaracion_array(p):
 	'''declaracionArray : TkId TkComa declaracionArray
-						| TkId TkDosPuntos TkArray TkCorcheteAbre TkNum TkCorcheteCierra TkOf typeInt
-						| TkId TkDosPuntos TkArray TkCorcheteAbre TkNum TkCorcheteCierra TkOf typeBool
-						| TkId TkDosPuntos TkArray TkCorcheteAbre TkNum TkCorcheteCierra TkOf typeChar'''
+						| TkId TkDosPuntos TkArray TkCorcheteAbre TkNum TkCorcheteCierra TkOf type'''
+
+def p_type(p):
+	'''type : typeInt
+			| typeBool
+			| typeChar'''
 
 def p_type_int(p):
 	'''typeInt : TkInt declaracionVar'''
@@ -348,4 +351,4 @@ print_tokens_or_errors()
 
 #Inicializacion del parser
 yacc.yacc()
-yacc.parse(data)
+#yacc.parse(data)
