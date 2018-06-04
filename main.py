@@ -259,13 +259,16 @@ def p_type(p):
 			| typeChar'''
 
 def p_type_int(p):
-	'''typeInt : TkInt declaracionVar'''
+	'''typeInt : TkInt declaracionVar
+			   | TkInt'''
 
 def p_type_bool(p):
-	'''typeBool : TkBool declaracionVar'''
+	'''typeBool : TkBool declaracionVar
+				| TkBool'''
 
 def p_type_char(p):	
-	'''typeChar : TkChar declaracionVar'''
+	'''typeChar : TkChar declaracionVar
+				| TkChar'''
 
 def p_begin(p):
 	'''begin : TkBegin cond'''
