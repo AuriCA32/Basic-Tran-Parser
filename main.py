@@ -208,9 +208,14 @@ class Node:
 			self.children = [ ]
 		self.leaf = leaf
 
-def p_start(t):
+def p_program(p):
+	'''program : start'''
+	print(p)
+
+def p_start(p):
 	'''start : TkWith declaracionVar TkBegin cond TkEnd
 			 | TkBegin cond TkEnd'''
+
 
 #Var o begin
 def p_declaracion_var(p):
@@ -227,20 +232,17 @@ def p_declaracion_id(p):
 
 #declaracion de id tipo int
 def p_declaracion_idNum(p):
-	'''declaracionIdNum : TkId TkComa declaracionIdNum
-						| TkId TkAsignacion TkNum TkComa declaracionIdNum
+	'''declaracionIdNum : TkId TkAsignacion TkNum TkComa declaracionIdNum
 						| TkId TkAsignacion TkNum TkDosPuntos typeInt'''
 
 #declaracion de id tipo char
 def p_declaracion_idChar(p):
-	'''declaracionIdChar : TkId TkComa declaracionIdChar
-						 | TkId TkAsignacion TkCaracter TkComa declaracionIdChar
+	'''declaracionIdChar : TkId TkAsignacion TkCaracter TkComa declaracionIdChar
 						 | TkId TkAsignacion TkCaracter TkDosPuntos typeChar'''
 
 #declaracion de id tipo bool
 def p_declaracion_idBool(p):
-	'''declaracionIdBool : TkId TkComa declaracionIdBool
-						 | TkId TkAsignacion TkTrue TkComa declaracionIdBool
+	'''declaracionIdBool : TkId TkAsignacion TkTrue TkComa declaracionIdBool
 						 | TkId TkAsignacion TkTrue TkDosPuntos typeBool
 						 | TkId TkAsignacion TkFalse TkComa declaracionIdBool
 						 | TkId TkAsignacion TkFalse TkDosPuntos typeBool'''
@@ -278,19 +280,11 @@ def p_cond(p):
 			| TkRead TkId TkPuntoComa cond
 			| TkPrint exp TkPuntoComa
 			| TkPrint exp TkPuntoComa cond
-			| exp TkPuntoComa
-			| exp TkPuntoComa cond
 			| TkWith declaracionVar TkBegin cond TkEnd 
 			| TkWith declaracionVar TkBegin cond TkEnd cond
 			| TkLlaveAbre cond TkLlaveCierra
 			| TkId TkAsignacion exp TkPuntoComa
 			| TkId TkAsignacion exp TkPuntoComa cond'''
-
-def p_exp(p):
-	'''exp : char
-		   | aritmetica
-		   | array
-		   | booleana'''
 
 def p_if(p):
 	'''if : TkIf relacionales TkHacer cond TkOtherwise TkHacer cond TkEnd
@@ -300,32 +294,74 @@ def p_for(p):
 	'''for : TkFor TkId TkFrom TkNum TkTo TkNum TkStep TkNum TkHacer cond TkEnd
 		   | TkFor TkId TkFrom TkNum TkTo TkNum TkHacer cond TkEnd'''
 
+def p_exp(p):
+	'''exp : char
+		   | aritmetica
+		   | array
+		   | booleana
+		   | TkId
+		   | TkParAbre TkId TkParCierra'''
+
 def p_aritmetica(p):
+	#OJO revisar lo del punto porque no entiendo########
 	'''aritmetica : TkId TkPunto TkNum
-				  | TkId
 				  | TkNum
-				  | TkId TkCorcheteAbre TkNum TkCorcheteCierra
+				  | TkParAbre aritmetica TkParCierra
 				  | aritmetica TkSuma aritmetica
+				  | TkId TkSuma TkId
+				  | aritmetica TkSuma TkId
+				  | TkId TkSuma aritmetica
 				  | aritmetica TkResta aritmetica
+				  | TkId TkResta TkId
+				  | aritmetica TkResta TkId
+				  | TkId TkResta aritmetica
 				  | aritmetica TkMult aritmetica
+				  | TkId TkMult TkId
+				  | aritmetica TkMult TkId
+				  | TkId TkMult aritmetica
 				  | aritmetica TkDiv aritmetica
+				  | TkId TkDiv TkId
+				  | aritmetica TkDiv TkId
+				  | TkId TkDiv aritmetica
 				  | aritmetica TkMod aritmetica
+				  | TkId TkMod TkId
+				  | aritmetica TkMod TkId
+				  | TkId TkMod aritmetica
+				  | TkMenos aritmetica
 				  | TkMenos TkId''' #menos unario
 
 def p_booleana(p):
 	'''booleana : TkTrue
 				| TkFalse
-				| TkId TkCorcheteAbre TkNum TkCorcheteCierra
-				| TkId
+				| TkParAbre booleana TkParCierra
 				| booleana TkConjuncion booleana
+				| TkId TkConjuncion booleana
+				| booleana TkConjuncion TkId
+				| TkId TkConjuncion TkId
 				| booleana TkDisyuncion booleana
+				| TkId TkDisyuncion booleana
+				| booleana TkDisyuncion TkId
+				| TkId TkDisyuncion TkId
 				| booleana TkIgual booleana
+				| TkId TkIgual booleana
+				| booleana TkIgual TkId
+				| TkId TkIgual TkId
 				| booleana TkDiferente booleana
-				| TkNegacion booleana'''
+				| TkId TkDiferente booleana
+				| booleana TkDiferente TkId
+				| TkId TkDiferente TkId
+				| TkNegacion booleana
+				| TkNegacion TkId'''
 
 def p_array(p):
-	'''array : TkId TkConcatenacion TkId
-			| TkShift TkId'''
+	'''array : array TkConcatenacion array
+			 | TkId TkConcatenacion array
+			 | array TkConcatenacion TkId
+			 | TkId TkConcatenacion TkId
+			 | TkShift array
+			 | TkShift TkId
+			 | array TkCorcheteAbre TkNum TkCorcheteCierra
+			 | TkParAbre array TkParCierra'''
 
 def p_char(p):
 	'''char : TkCaracter TkSiguienteCar

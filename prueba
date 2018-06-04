@@ -1,1 +1,5 @@
-x = a*b + c
+with
+    var a : int
+begin
+    a <- 18 + 4;
+end
