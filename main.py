@@ -1,4 +1,5 @@
 import ply.lex as lex
+import ply.yacc as yacc
 import sys
 import re
 
@@ -15,6 +16,8 @@ reserved={
 	'bool' : 'TkBool',
 	'char' : 'TkChar',
 	'array' : 'TkArray',
+	'of' : 'TkOf',
+
 	'if' : 'TkIf',
 	'otherwise' : 'TkOtherwise',
 	'while' : 'TkWhile',
@@ -56,6 +59,7 @@ tokens = [
 	'TkMayor',
 	'TkMayorIgual',
 	'TkIgual',
+	'TkDiferente',
 	'TkSiguienteCar',
 	'TkAnteriorCar',
 	'TkValorAscii',
@@ -93,6 +97,7 @@ t_TkMenorIgual  = r'<='
 t_TkMayor = r'>'
 t_TkMayorIgual  = r'>='
 t_TkIgual = r'='
+t_TkDiferente = r'/='
 t_TkSiguienteCar  = r'[+][+]'
 t_TkAnteriorCar = r'--'
 t_TkValorAscii  = r'\#'
@@ -102,6 +107,11 @@ t_TkCaracter = r'[\'\"][a-zA-Z0-9][\'\"]|[\'\"][\t][\'\"]|[\'\"][\n][\'\"]|[\'\"
 
 # String con caracteres ignorados (espacios y tab)
 t_ignore  = ' \t'
+
+
+###############################################
+########### Funciones para el lexer ###########
+###############################################
 
 # Regla para identificar numeros
 def t_TkNum(t):
@@ -173,6 +183,70 @@ def read_given_file(gfile):
         print("Unexpected error:", sys.exc_info()[0])
         exit()
 
+################################################
+########### Funciones para el parser ###########
+################################################
+
+#Inicio declaraciones de variables
+def p_with(p):
+	'''with : TkWith declaracionVar'''
+
+#Var o begin
+def p_declaracion_var(p):
+	'''declaracionVar : TkVar declaracionId
+					  | TkVar declaracionArray
+					  | begin'''
+
+#declaracion de id variables
+def p_declaracion_id(p):
+	'''declaracionId : TkId TkComa declaracionId
+					 | TkId TkDosPuntos type
+					 | TkId TkAsignacion TkNum TkComa declaracionIdNum
+					 | TkId TkAsignacion TkTrue TkComa declaracionIdBool
+					 | TkId TkAsignacion TkTrue TkComa declaracionIdChar'''
+
+#declaracion de id tipo int
+def p_declaracion_idNum(p):
+	'''declaracionIdNum : TkId TkComa declaracionIdNum
+						| TkId TkAsignacion TkNum TkComa declaracionIdNum
+						| TkId TkAsignacion TkNum TkDosPuntos typeInt'''
+
+#declaracion de id tipo char
+def p_declaracion_idChar(p):
+	'''declaracionIdChar : TkId TkComa declaracionIdChar
+						 | TkId TkAsignacion TkCaracter TkComa declaracionIdChar
+						 | TkId TkAsignacion TkCaracter TkDosPuntos typeChar'''
+
+#declaracion de id tipo bool
+def p_declaracion_idBool(p):
+	'''declaracionIdBool : TkId TkComa declaracionIdBool
+						 | TkId TkAsignacion TkTrue TkComa declaracionIdBool
+						 | TkId TkAsignacion TkTrue TkDosPuntos typeBool
+						 | TkId TkAsignacion TkFalse TkComa declaracionIdBool
+						 | TkId TkAsignacion TkFalse TkDosPuntos typeBool'''
+
+#declaracion de arreglos
+def p_declaracion_array(p):
+	'''declaracionArray : TkId TkComa declaracionArray
+						| TkId TkDosPuntos TkArray TkCorcheteAbre TkNum TkCorcheteCierra TkOf typeInt
+						| TkId TkDosPuntos TkArray TkCorcheteAbre TkNum TkCorcheteCierra TkOf typeBool
+						| TkId TkDosPuntos TkArray TkCorcheteAbre TkNum TkCorcheteCierra TkOf typeChar'''
+
+def p_type_int(p):
+	'''typeInt : TkInt declaracionVar'''
+
+def p_type_bool(p):
+	'''typeBool : TkBool declaracionVar'''
+
+def p_type_char(p):	
+	'''typeChar : TkChar declaracionVar'''
+
+def p_begin(p):
+	'''begin: TkBegin instruccion TkEnd'''
+
+def p_asignacion(p):
+	'''exp : '''
+
 
 #Inicializacion del lexer
 lexer = lex.lex()
@@ -184,3 +258,5 @@ while True:
         break      
     listar_token(tok)
 print_tokens_or_errors()
+
+#Inicializacion del parser
