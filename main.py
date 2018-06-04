@@ -209,7 +209,7 @@ class Node:
 		self.leaf = leaf
 
 def p_start(t):
-	'''start : Tkwith declaracionVar TkBegin cond TkEnd
+	'''start : TkWith declaracionVar TkBegin cond TkEnd
 			 | TkBegin cond TkEnd'''
 
 #Var o begin
@@ -221,9 +221,9 @@ def p_declaracion_var(p):
 def p_declaracion_id(p):
 	'''declaracionId : TkId TkComa declaracionId
 					 | TkId TkDosPuntos type
-					 | TkId TkAsignacion TkNum TkComa declaracionIdNum
-					 | TkId TkAsignacion TkTrue TkComa declaracionIdBool
-					 | TkId TkAsignacion TkCaracter TkComa declaracionIdChar'''
+					 | declaracionIdNum
+					 | declaracionIdBool
+					 | declaracionIdChar'''
 
 #declaracion de id tipo int
 def p_declaracion_idNum(p):
@@ -269,16 +269,22 @@ def p_type_char(p):
 
 def p_cond(p):
 	'''cond : if
-			| while
+			| if cond
+			| TkWhile relacionales TkHacer cond TkEnd
+			| TkWhile relacionales TkHacer cond TkEnd cond
+			| for cond
 			| for
-			| read TkPuntoComa
-			| print TkPuntoComa
-			| TkParAbre exp TkParCierra
+			| TkRead TkId TkPuntoComa
+			| TkRead TkId TkPuntoComa cond
+			| TkPrint exp TkPuntoComa
+			| TkPrint exp TkPuntoComa cond
 			| exp TkPuntoComa
-			| with
+			| exp TkPuntoComa cond
+			| TkWith declaracionVar TkBegin cond TkEnd 
+			| TkWith declaracionVar TkBegin cond TkEnd cond
 			| TkLlaveAbre cond TkLlaveCierra
 			| TkId TkAsignacion exp TkPuntoComa
-			| TkEnd'''
+			| TkId TkAsignacion exp TkPuntoComa cond'''
 
 def p_exp(p):
 	'''exp : char
@@ -290,18 +296,9 @@ def p_if(p):
 	'''if : TkIf relacionales TkHacer cond TkOtherwise TkHacer cond TkEnd
 		  | TkIf relacionales TkHacer cond TkEnd'''
 
-def p_while(p):
-	'''while : TkWhile relacionales TkHacer cond TkEnd'''
-
 def p_for(p):
 	'''for : TkFor TkId TkFrom TkNum TkTo TkNum TkStep TkNum TkHacer cond TkEnd
 		   | TkFor TkId TkFrom TkNum TkTo TkNum TkHacer cond TkEnd'''
-
-def p_read(p):
-	'''read : TkRead TkId'''
-
-def p_print(p):
-	'''print : TkPrint exp'''
 
 def p_aritmetica(p):
 	'''aritmetica : TkId TkPunto TkNum
