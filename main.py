@@ -197,15 +197,14 @@ class Node:
 			self.children = [ ]
 		self.leaf = leaf
 
-#Inicio declaraciones de variables
-def p_with(p):
-	'''with : TkWith declaracionVar'''
+def p_start(t):
+	'''start : Tkwith declaracionVar TkBegin cond TkEnd
+			 | TkBegin cond TkEnd'''
 
 #Var o begin
 def p_declaracion_var(p):
 	'''declaracionVar : TkVar declaracionId
-					  | TkVar declaracionArray
-					  | begin'''
+					  | TkVar declaracionArray'''
 
 #declaracion de id variables
 def p_declaracion_id(p):
@@ -253,9 +252,6 @@ def p_type_bool(p):
 
 def p_type_char(p):	
 	'''typeChar : TkChar declaracionVar'''
-
-def p_begin(p):
-	'''begin : TkBegin cond'''
 
 def p_cond(p):
 	'''cond : if
