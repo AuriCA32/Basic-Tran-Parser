@@ -210,17 +210,24 @@ class Node:
 
 def p_program(p):
 	'''program : start'''
-	print(p)
+	p[0] = p[1]
 
 def p_start(p):
 	'''start : TkWith declaracionVar TkBegin cond TkEnd
 			 | TkBegin cond TkEnd'''
-
+	if len(p)>4:
+#		p[0] = Node('comienzo',[p[2],p[4]],p[3])
+		p[0] = p[4]
+	else:
+		p[0] = p[2]
 
 #Var o begin
 def p_declaracion_var(p):
 	'''declaracionVar : TkVar declaracionId
-					  | TkVar declaracionArray'''
+					  | TkVar declaracionArray
+					  | TkVar declaracionId declaracionVar
+					  | TkVar declaracionArray declaracionVar'''
+	
 
 #declaracion de id variables
 def p_declaracion_id(p):
@@ -272,27 +279,63 @@ def p_type_char(p):
 def p_cond(p):
 	'''cond : if
 			| if cond
-			| TkWhile relacionales TkHacer cond TkEnd
-			| TkWhile relacionales TkHacer cond TkEnd cond
+			| while
+			| while cond
 			| for cond
 			| for
-			| TkRead TkId TkPuntoComa
-			| TkRead TkId TkPuntoComa cond
-			| TkPrint exp TkPuntoComa
-			| TkPrint exp TkPuntoComa cond
+			| read
+			| read cond
+			| print
+			| print cond
 			| TkWith declaracionVar TkBegin cond TkEnd 
 			| TkWith declaracionVar TkBegin cond TkEnd cond
-			| TkLlaveAbre cond TkLlaveCierra
 			| TkId TkAsignacion exp TkPuntoComa
 			| TkId TkAsignacion exp TkPuntoComa cond'''
+	if p[1]=="if" or p[1]=="for" or p[1]=="read" or p[1]=="print" or p[1]=="while":
+		if len(p)>2:
+			p[0] = Node('sequencia',[p[1],p[2]],None)
+		else:
+			p[0] = p[1]
+	elif p[1]=="with":
+		Nodo = Node('beginInterno',[p[2],p[4]],p[3])
+		if len(p)>6:
+			p[0] = Node('sequencia',[Nodo,p[6]],None)
+		else:
+			p[0] = Nodo
+	else:
+		Nodo = Node('asignacion',[p[1],p[3]],p[2])
+		if len(p)>5:
+			p[0] = Node('sequencia',[Nodo,p[5]],None)
+		else:
+			p[0] = Nodo
 
 def p_if(p):
 	'''if : TkIf relacionales TkHacer cond TkOtherwise TkHacer cond TkEnd
 		  | TkIf relacionales TkHacer cond TkEnd'''
+	if len(p)>6:
+		p[0] = Node('if',[p[2],p[4],p[7]],p[1])
+	else:
+		p[0] = Node('if',[p[2],p[4]],p[1])
+
+def p_while(p):
+	'''while : TkWhile relacionales TkHacer cond TkEnd'''
+	p[0] = Node('while',[p[2],p[4]],p[1])
 
 def p_for(p):
 	'''for : TkFor TkId TkFrom TkNum TkTo TkNum TkStep TkNum TkHacer cond TkEnd
 		   | TkFor TkId TkFrom TkNum TkTo TkNum TkHacer cond TkEnd'''
+	if len(p)>10:
+		p[0] = Node('for',[p[2],p[4],p[6],p[8],p[10]],p[1])
+	else:
+		p[0] = Node('for',[p[2],p[4],p[6],p[8]],p[1])
+
+def p_read(p):
+	'''read : TkRead TkId TkPuntoComa'''
+	p[0] = Node('read',[None,p[2]],p[1])
+
+def p_print(p):
+	'''print : TkPrint exp TkPuntoComa'''
+	p[0] = Node('print',[None,p[2]],p[1])
 
 def p_exp(p):
 	'''exp : char
@@ -301,6 +344,10 @@ def p_exp(p):
 		   | booleana
 		   | TkId
 		   | TkParAbre TkId TkParCierra'''
+	if len(p)>2:
+		p[0] = p[2]
+	else:
+		p[0] = p[1]
 
 def p_aritmetica(p):
 	#OJO revisar lo del punto porque no entiendo########
@@ -329,6 +376,25 @@ def p_aritmetica(p):
 				  | TkId TkMod aritmetica
 				  | TkMenos aritmetica
 				  | TkMenos TkId''' #menos unario
+	if len(p)==4:
+		if p[1]=="(" and p[3]==")":
+			p[0] = p[2]
+		elif p[2]=="+":
+			p[0] = Node('suma',[p[1],p[3]],p[2])
+		elif p[2]=="-":
+			p[0] = Node('resta',[p[1],p[3]],p[2])
+		elif p[2]=="*":
+			p[0] = Node('multiplicacion',[p[1],p[3]],p[2])
+		elif p[2]=="/":
+			p[0] = Node('division',[p[1],p[3]],p[2])
+		elif p[2]=="%":
+			p[0] = Node('modulo',[p[1],p[3]],p[2])
+		else:
+			p[0] = Node('punto',[p[1],p[3]],p[2])
+	elif len(p)==3:
+		p[0] = Node('menosUnario',[None,p[2]],p[1])
+	else:
+		p[0] = p[1]
 
 def p_booleana(p):
 	'''booleana : TkTrue
@@ -352,6 +418,21 @@ def p_booleana(p):
 				| TkId TkDiferente TkId
 				| TkNegacion booleana
 				| TkNegacion TkId'''
+	if len(p)==4:
+		if p[1]=="(" and p[3]==")":
+			p[0] = p[2]
+		elif p[2]=="/\\":
+			p[0] = Node('conjuncion',[p[1],p[3]],p[2])
+		elif p[2]=="\\/":
+			p[0] = Node('disyuncion',[p[1],p[3]],p[2])
+		elif p[2]=="=":
+			p[0] = Node('igual',[p[1],p[3]],p[2])
+		elif p[2]=="/=":
+			p[0] = Node('diferente',[p[1],p[3]],p[2])
+	elif len(p)==3:
+		p[0] = Node('negacion',[None,p[2]],p[1])
+	else:
+		p[0] = p[1]
 
 def p_array(p):
 	'''array : array TkConcatenacion array
@@ -362,11 +443,26 @@ def p_array(p):
 			 | TkShift TkId
 			 | array TkCorcheteAbre TkNum TkCorcheteCierra
 			 | TkParAbre array TkParCierra'''
+	if len(p)>3:
+		if p[1]=="(" and p[3]==")":
+			p[0] = p[2]
+		elif p[2]=="::":
+			p[0] = Node('concatenacion',[p[1],p[3]],p[2])
+		else:
+			p[0] = Node('accederEnArreglo',[p[1],p[3]],p[2])
+	elif len(p)==3:
+		p[0] = Node('shift',[None,p[2]],p[1])
 
 def p_char(p):
 	'''char : TkCaracter TkSiguienteCar
 			| TkCaracter TkAnteriorCar
 			| TkValorAscii TkCaracter'''
+	if p[2]=="++":
+		p[0] = Node('siguienteChar',[None,p[1]],p[2])
+	if p[2]=="--":
+		p[0] = Node('anteriorChar',[None,p[1]],p[2])
+	else:
+		p[0] = Node('valorAscii',[None,p[2]],p[1])
 
 def p_relacionales(p):
 	'''relacionales : booleana
@@ -376,6 +472,21 @@ def p_relacionales(p):
 					| aritmetica TkMayorIgual aritmetica
 					| aritmetica TkIgual aritmetica
 					| aritmetica TkDiferente aritmetica'''
+	if len(p)==2:
+		p[0] = p[1]
+	else:
+		if p[2]=="<":
+			p[0] = Node('menor',[p[1],p[3]],p[2])
+		elif p[2]=="<=":
+			p[0] = Node('menorIgual',[p[1],p[3]],p[2])
+		elif p[2]==">":
+			p[0] = Node('mayor',[p[1],p[3]],p[2])
+		elif p[2]==">=":
+			p[0] = Node('mayorIgual',[p[1],p[3]],p[2])
+		elif p[2]=="=":
+			p[0] = Node('igual',[p[1],p[3]],p[2])
+		elif p[2]=="/=":
+			p[0] = Node('diferente',[p[1],p[3]],p[2])
 
 # Error rule for syntax errors
 def p_error(p):
@@ -392,6 +503,24 @@ while True:
 	listar_token(tok)
 print_tokens_or_errors()
 
+def buildtree(node):
+	sting=""
+	if isinstance(node,Node):
+		sting+="("+node.type
+		if node.leaf!=None:
+			sting+=","+node.leaf
+		for child in node.children:
+			sting+=","+buildtree(child)
+		sting+=")"
+	else:
+		if isinstance(node,int):
+			sting+=str(node)
+		else:
+			sting+=node
+	return sting
+
 #Inicializacion del parser
 yacc.yacc()
-yacc.parse(data)
+y = yacc.parse(data)
+print(buildtree(y))
+	

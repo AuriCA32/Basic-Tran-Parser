@@ -1,5 +1,7 @@
 with
     var a : int
+    var b : int
 begin
     a <- 18 + 4;
+    b <- 40 / 4;
 end
