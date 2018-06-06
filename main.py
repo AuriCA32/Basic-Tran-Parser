@@ -215,8 +215,7 @@ def p_start(p):
 	'''start : TkWith declaracionVar TkBegin cond TkEnd
 			 | TkBegin cond TkEnd'''
 	if len(p)>4:
-#		p[0] = Node('comienzo',[p[2],p[4]],p[3])
-		p[0] = p[4]
+		p[0] = Node('comienzo',[p[2],p[4]],None)
 	else:
 		p[0] = p[2]
 
@@ -227,48 +226,64 @@ def p_declaracion_var(p):
 					  | TkVar declaracionId declaracionVar
 					  | TkVar declaracionArray declaracionVar'''
 	if len(p)>3:
-		p[0]=Node('declaraciones',[p[2],p[3]],p[1]) ####acomodar
+		p[0]=Node('secuencia_declaraciones',[p[2],p[3]],p[1]) 
 	else:
-		p[0]=Node('declaraciones',[p[2]],p[1])
+		p[0] = p[2]
 
 #declaracion de id variables
 def p_declaracion_id(p):
 	'''declaracionId : TkId TkComa declaracionId
-					 | TkId TkDosPuntos type
 					 | declaracionIdNum
 					 | declaracionIdBool
 					 | declaracionIdChar'''
 	if len(p)>2:
-		p[0]=Node('declaracion_id',[p[1],p[3]],None)
+		p[0]=Node('secuencia_declaracionId',[p[1],p[3]],None)
 	else:
-		p[0]=p[1]
+		p[0] = p[1]
 
 #declaracion de id tipo int
 def p_declaracion_idNum(p):
 	'''declaracionIdNum : TkId TkAsignacion TkNum TkComa declaracionIdNum
-						| TkId TkAsignacion TkNum TkDosPuntos typeInt'''
-	if p[4]==",": ####Hay que acomodar esto
-		p[0]=Node('declaraciones_id_int',[p[1],p[3],p[5]],p[2])
+						| TkId TkAsignacion TkNum TkDosPuntos TkInt
+						| TkId TkDosPuntos TkInt'''
+	if len(p)>4:
+		Nodo = Node('asignacion',[p[1],p[3]],p[2])
+		if p[4]==",":
+			p[0]=Node('secuencia_declaracionIdNum',[Nodo,p[5]],None)   ######REVISAR
+		else:
+			p[0]=Node('declaracionIdNum',[Nodo,p[5]],p[4])
 	else:
-		p[0]=Node('declaraciones_id_int',[p[1],p[3],p[5]],p[2])
+		p[0]=Node('declaracionIdNum',[p[1],p[3]],p[2])
 
 #declaracion de id tipo char
 def p_declaracion_idChar(p):
 	'''declaracionIdChar : TkId TkAsignacion TkCaracter TkComa declaracionIdChar
-						 | TkId TkAsignacion TkCaracter TkDosPuntos typeChar'''
-	p[0]=Node('declaraciones_id_int',[p[1],p[3],p[5]],p[2])
+						 | TkId TkAsignacion TkCaracter TkDosPuntos TkChar
+						 | TkId TkDosPuntos TkChar'''
+	if len(p)>4:
+		Nodo = Node('asignacion',[p[1],p[3]],p[2])
+		if p[4]==",":
+			p[0]=Node('secuencia_declaracionIdChar',[Nodo,p[5]],None)   ######REVISAR
+		else:
+			p[0]=Node('declaracionIdChar',[Nodo,p[5]],p[4])
+	else:
+		p[0]=Node('declaracionIdChar',[p[1],p[3]],p[2])
 
 #declaracion de id tipo bool
 def p_declaracion_idBool(p):
 	'''declaracionIdBool : TkId TkAsignacion TkTrue TkComa declaracionIdBool
-						 | TkId TkAsignacion TkTrue TkDosPuntos typeBool
+						 | TkId TkAsignacion TkTrue TkDosPuntos TkBool
 						 | TkId TkAsignacion TkFalse TkComa declaracionIdBool
-						 | TkId TkAsignacion TkFalse TkDosPuntos typeBool'''
-	if p[3]=="true":
-		p[0]=Node('declaraciones_id_true',[p[1],p[3],p[5]],p[2])
-	elif p[3]=="false":
-		p[0]=Node('declaraciones_id_true',[p[1],p[3],p[5]],p[2])
-
+						 | TkId TkAsignacion TkFalse TkDosPuntos TkBool
+						 | TkId TkDosPuntos TkBool'''
+	if len(p)>4:
+		Nodo = Node('asignacion',[p[1],p[3]],p[2])
+		if p[4]==",":
+			p[0]=Node('secuencia_declaracionIdBool',[Nodo,p[5]],None)   ######REVISAR
+		else:
+			p[0]=Node('declaracionIdBool',[Nodo,p[5]],p[4])
+	else:
+		p[0]=Node('declaracionIdBool',[p[1],p[3]],p[2])
 
 #declaracion de arreglos
 def p_declaracion_array(p):
@@ -277,38 +292,13 @@ def p_declaracion_array(p):
 	if len(p)>4:
 		p[0]=Node('declaracion_array',[p[1],p[5],p[8]],p[3])
 	else:
-		p[0]=Node('declaracion_array',[p[1],p[3]],None)
+		p[0]=Node('secuencia_declaracionArray',[p[1],p[3]],None)
 
 def p_type(p):
-	'''type : typeInt
-			| typeBool
-			| typeChar'''
-	p[0]=p[1]
-
-def p_type_int(p):
-	'''typeInt : TkInt declaracionVar
-			   | TkInt'''
-	if len(p)>2:
-		p[0]=Node('tipo_entero',[p[1],p[2]],None)
-	else:
-		p[0]=p[1]
-
-
-def p_type_bool(p):
-	'''typeBool : TkBool declaracionVar
-				| TkBool'''
-	if len(p)>2:
-		p[0]=Node('tipo_bool',[p[1],p[2]],None)
-	else:
-		p[0]=p[1]
-
-def p_type_char(p):	
-	'''typeChar : TkChar declaracionVar
-				| TkChar'''
-	if len(p)>2:
-		p[0]=Node('tipo_char',[p[1],p[2]],None)
-	else:
-		p[0]=p[1]
+	'''type : TkInt
+			| TkChar
+			| TkBool'''
+	p[0] = p[1]
 
 def p_cond(p):
 	'''cond : if
@@ -325,27 +315,29 @@ def p_cond(p):
 			| TkWith declaracionVar TkBegin cond TkEnd cond
 			| TkId TkAsignacion exp TkPuntoComa
 			| TkId TkAsignacion exp TkPuntoComa cond'''
-	if p[1]=="if" or p[1]=="for" or p[1]=="read" or p[1]=="print" or p[1]=="while":
+	if p[1]=="if" or p[1]=="while" or p[1]=="for" or p[1]=="read" or p[1]=="print":
 		if len(p)>2:
-			p[0] = Node('sequencia',[p[1],p[2]],None)
+			p[0] = Node('secuencia',[p[1],p[2]],None)
 		else:
 			p[0] = p[1]
 	elif p[1]=="with":
 		Nodo = Node('beginInterno',[p[2],p[4]],p[3])
 		if len(p)>6:
-			p[0] = Node('sequencia',[Nodo,p[6]],None)
+			p[0] = Node('secuencia',[Nodo,p[6]],None)
 		else:
 			p[0] = Nodo
-	else:
+	elif len(p)>4 and p[4]==";":
+		print(p[1])
 		Nodo = Node('asignacion',[p[1],p[3]],p[2])
 		if len(p)>5:
-			p[0] = Node('sequencia',[Nodo,p[5]],None)
+			p[0] = Node('secuencia',[Nodo,p[5]],None)
 		else:
 			p[0] = Nodo
 
 def p_if(p):
 	'''if : TkIf relacionales TkHacer cond TkOtherwise TkHacer cond TkEnd
 		  | TkIf relacionales TkHacer cond TkEnd'''
+	print(p[2])
 	if len(p)>6:
 		p[0] = Node('if',[p[2],p[4],p[7]],p[1])
 	else:
@@ -365,11 +357,11 @@ def p_for(p):
 
 def p_read(p):
 	'''read : TkRead TkId TkPuntoComa'''
-	p[0] = Node('read',[None,p[2]],p[1])
+	p[0] = Node('read',[p[2]],p[1])
 
 def p_print(p):
 	'''print : TkPrint exp TkPuntoComa'''
-	p[0] = Node('print',[None,p[2]],p[1])
+	p[0] = Node('print',[p[2]],p[1])
 
 def p_exp(p):
 	'''exp : char
@@ -426,7 +418,7 @@ def p_aritmetica(p):
 		else:
 			p[0] = Node('punto',[p[1],p[3]],p[2])
 	elif len(p)==3:
-		p[0] = Node('menosUnario',[None,p[2]],p[1])
+		p[0] = Node('menosUnario',[p[2]],p[1])
 	else:
 		p[0] = p[1]
 
@@ -464,7 +456,7 @@ def p_booleana(p):
 		elif p[2]=="/=":
 			p[0] = Node('diferente',[p[1],p[3]],p[2])
 	elif len(p)==3:
-		p[0] = Node('negacion',[None,p[2]],p[1])
+		p[0] = Node('negacion',[p[2]],p[1])
 	else:
 		p[0] = p[1]
 
@@ -485,18 +477,18 @@ def p_array(p):
 		else:
 			p[0] = Node('accederEnArreglo',[p[1],p[3]],p[2])
 	elif len(p)==3:
-		p[0] = Node('shift',[None,p[2]],p[1])
+		p[0] = Node('shift',[p[2]],p[1])
 
 def p_char(p):
 	'''char : TkCaracter TkSiguienteCar
 			| TkCaracter TkAnteriorCar
 			| TkValorAscii TkCaracter'''
 	if p[2]=="++":
-		p[0] = Node('siguienteChar',[None,p[1]],p[2])
+		p[0] = Node('siguienteChar',[p[1]],p[2])
 	if p[2]=="--":
-		p[0] = Node('anteriorChar',[None,p[1]],p[2])
+		p[0] = Node('anteriorChar',[p[1]],p[2])
 	else:
-		p[0] = Node('valorAscii',[None,p[2]],p[1])
+		p[0] = Node('valorAscii',[p[2]],p[1])
 
 def p_relacionales(p):
 	'''relacionales : booleana
@@ -539,6 +531,8 @@ print_tokens_or_errors()
 
 def buildtree(node):
 	sting=""
+	if node==None:
+		return sting
 	if isinstance(node,Node):
 		sting+="("+node.type
 		if node.leaf!=None:

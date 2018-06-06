@@ -1,7 +1,9 @@
 with
-    var a : int
-    var b : int
+    var a <- true,b <- false,c : bool
 begin
-    a <- 18 + 4;
-    b <- 40 / 4;
+    if a = b ->
+        c <- true;
+    otherwise ->
+        c <- false;
+    end
 end
