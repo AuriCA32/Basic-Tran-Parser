@@ -226,7 +226,7 @@ def p_declaracion_var(p):
 					  | TkVar declaracionId declaracionVar
 					  | TkVar declaracionArray declaracionVar'''
 	if len(p)>3:
-		p[0]=Node('secuencia_declaraciones',[p[2],p[3]],p[1]) 
+		p[0] = Node('secuencia_declaraciones',[p[2],p[3]],p[1]) 
 	else:
 		p[0] = p[2]
 
@@ -314,34 +314,32 @@ def p_cond(p):
 			| TkWith declaracionVar TkBegin cond TkEnd 
 			| TkWith declaracionVar TkBegin cond TkEnd cond
 			| TkId TkAsignacion exp TkPuntoComa
-			| TkId TkAsignacion exp TkPuntoComa cond'''
-	if p[1]=="if" or p[1]=="while" or p[1]=="for" or p[1]=="read" or p[1]=="print":
-		if len(p)>2:
-			p[0] = Node('secuencia',[p[1],p[2]],None)
-		else:
-			p[0] = p[1]
-	elif p[1]=="with":
+			| TkId TkAsignacion exp TkPuntoComa cond'''	
+	if p[1]=="with":
 		Nodo = Node('beginInterno',[p[2],p[4]],p[3])
 		if len(p)>6:
 			p[0] = Node('secuencia',[Nodo,p[6]],None)
 		else:
 			p[0] = Nodo
 	elif len(p)>4 and p[4]==";":
-		print(p[1])
 		Nodo = Node('asignacion',[p[1],p[3]],p[2])
 		if len(p)>5:
 			p[0] = Node('secuencia',[Nodo,p[5]],None)
 		else:
 			p[0] = Nodo
+	else:
+		if len(p)>2:
+			p[0] = Node('secuencia',[p[1],p[2]],None)
+		else:
+			p[0] = p[1]
 
 def p_if(p):
 	'''if : TkIf relacionales TkHacer cond TkOtherwise TkHacer cond TkEnd
 		  | TkIf relacionales TkHacer cond TkEnd'''
-	print(p[2])
 	if len(p)>6:
-		p[0] = Node('if',[p[2],p[4],p[7]],p[1])
+		p[0] = Node('condicional',[p[2],p[4],p[7]],p[1])
 	else:
-		p[0] = Node('if',[p[2],p[4]],p[1])
+		p[0] = Node('condicional',[p[2],p[4]],p[1])
 
 def p_while(p):
 	'''while : TkWhile relacionales TkHacer cond TkEnd'''
