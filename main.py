@@ -227,7 +227,10 @@ def p_declaracion_var(p):
 					  | TkVar declaracionArray
 					  | TkVar declaracionId declaracionVar
 					  | TkVar declaracionArray declaracionVar'''
-	
+	if len(p)>3:
+		p[0]=Node('declaraciones',[p[2],p[3]],p[1]) ####acomodar
+	else:
+		p[0]=Node('declaraciones',[p[2]],p[1])
 
 #declaracion de id variables
 def p_declaracion_id(p):
@@ -236,16 +239,25 @@ def p_declaracion_id(p):
 					 | declaracionIdNum
 					 | declaracionIdBool
 					 | declaracionIdChar'''
+	if len(p)>2:
+		p[0]=Node('declaracion_id',[p[1],p[3]],None)
+	else:
+		p[0]=p[1]
 
 #declaracion de id tipo int
 def p_declaracion_idNum(p):
 	'''declaracionIdNum : TkId TkAsignacion TkNum TkComa declaracionIdNum
 						| TkId TkAsignacion TkNum TkDosPuntos typeInt'''
+	if p[4]==",": ####Hay que acomodar esto
+		p[0]=Node('declaraciones_id_int',[p[1],p[3],p[5]],p[2])
+	else:
+		p[0]=Node('declaraciones_id_int',[p[1],p[3],p[5]],p[2])
 
 #declaracion de id tipo char
 def p_declaracion_idChar(p):
 	'''declaracionIdChar : TkId TkAsignacion TkCaracter TkComa declaracionIdChar
 						 | TkId TkAsignacion TkCaracter TkDosPuntos typeChar'''
+	p[0]=Node('declaraciones_id_int',[p[1],p[3],p[5]],p[2])
 
 #declaracion de id tipo bool
 def p_declaracion_idBool(p):
@@ -253,28 +265,51 @@ def p_declaracion_idBool(p):
 						 | TkId TkAsignacion TkTrue TkDosPuntos typeBool
 						 | TkId TkAsignacion TkFalse TkComa declaracionIdBool
 						 | TkId TkAsignacion TkFalse TkDosPuntos typeBool'''
+	if p[3]=="true":
+		p[0]=Node('declaraciones_id_true',[p[1],p[3],p[5]],p[2])
+	elif p[3]=="false":
+		p[0]=Node('declaraciones_id_true',[p[1],p[3],p[5]],p[2])
+
 
 #declaracion de arreglos
 def p_declaracion_array(p):
 	'''declaracionArray : TkId TkComa declaracionArray
 						| TkId TkDosPuntos TkArray TkCorcheteAbre TkNum TkCorcheteCierra TkOf type'''
+	if len(p)>4:
+		p[0]=Node('declaracion_array',[p[1],p[5],p[8]],p[3])
+	else:
+		p[0]=Node('declaracion_array',[p[1],p[3]],None)
 
 def p_type(p):
 	'''type : typeInt
 			| typeBool
 			| typeChar'''
+	p[0]=p[1]
 
 def p_type_int(p):
 	'''typeInt : TkInt declaracionVar
 			   | TkInt'''
+	if len(p)>2:
+		p[0]=Node('tipo_entero',[p[1],p[2]],None)
+	else:
+		p[0]=p[1]
+
 
 def p_type_bool(p):
 	'''typeBool : TkBool declaracionVar
 				| TkBool'''
+	if len(p)>2:
+		p[0]=Node('tipo_bool',[p[1],p[2]],None)
+	else:
+		p[0]=p[1]
 
 def p_type_char(p):	
 	'''typeChar : TkChar declaracionVar
 				| TkChar'''
+	if len(p)>2:
+		p[0]=Node('tipo_char',[p[1],p[2]],None)
+	else:
+		p[0]=p[1]
 
 def p_cond(p):
 	'''cond : if
