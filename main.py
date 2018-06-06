@@ -17,7 +17,6 @@ reserved={
 	'char' : 'TkChar',
 	'array' : 'TkArray',
 	'of' : 'TkOf',
-
 	'if' : 'TkIf',
 	'otherwise' : 'TkOtherwise',
 	'while' : 'TkWhile',
