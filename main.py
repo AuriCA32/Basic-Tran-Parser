@@ -42,8 +42,8 @@ tokens = [
 	'TkParCierra',
 	'TkCorcheteAbre',
 	'TkCorcheteCierra',
-	'TkLlaveAbre',
-	'TkLlaveCierra',
+#	'TkLlaveAbre',
+#	'TkLlaveCierra',
 	'TkHacer',
 	'TkAsignacion',
 	'TkSuma',
@@ -81,8 +81,8 @@ t_TkParAbre = r'\('
 t_TkParCierra = r'\)'
 t_TkCorcheteAbre  = r'\['
 t_TkCorcheteCierra  = r'\]'
-t_TkLlaveAbre = r'\{'
-t_TkLlaveCierra = r'\}'
+#t_TkLlaveAbre = r'\{'
+#t_TkLlaveCierra = r'\}'
 t_TkHacer = r'->'
 t_TkAsignacion = r'<-'
 t_TkSuma  = r'\+'
@@ -168,9 +168,11 @@ def print_tokens_or_errors():
 	if(len(tokError)>0):
 		for i in range(len(tokError)):
 			print(tokError[i])
-	else:
-		for i in range(len(tokensList)):
-			print(tokensList[i])
+		return -1
+	return 0
+	# else:
+	# 	for i in range(len(tokensList)):
+	# 		print(tokensList[i])
 
 #Funcion que lee un archivo y lo retorna como string
 def read_given_file(gfile):
@@ -213,11 +215,14 @@ def p_program(p):
 
 def p_start(p):
 	'''start : TkWith declaracionVar TkBegin cond TkEnd
-			 | TkBegin cond TkEnd'''
+			 | TkBegin cond TkEnd
+			 | TkBegin TkEnd'''
 	if len(p)>4:
 		p[0] = Node('comienzo',[p[2],p[4]],None)
-	else:
+	elif len(p)>3:
 		p[0] = p[2]
+	else:
+		p[0] = None
 
 #Var o begin
 def p_declaracion_var(p):
@@ -334,15 +339,15 @@ def p_cond(p):
 			p[0] = p[1]
 
 def p_if(p):
-	'''if : TkIf relacionales TkHacer cond TkOtherwise TkHacer cond TkEnd
-		  | TkIf relacionales TkHacer cond TkEnd'''
+	'''if : TkIf operacion TkHacer cond TkOtherwise TkHacer cond TkEnd
+		  | TkIf operacion TkHacer cond TkEnd'''
 	if len(p)>6:
 		p[0] = Node('condicional',[p[2],p[4],p[7]],p[1])
 	else:
 		p[0] = Node('condicional',[p[2],p[4]],p[1])
 
 def p_while(p):
-	'''while : TkWhile relacionales TkHacer cond TkEnd'''
+	'''while : TkWhile operacion TkHacer cond TkEnd'''
 	p[0] = Node('while',[p[2],p[4]],p[1])
 
 def p_for(p):
@@ -363,100 +368,155 @@ def p_print(p):
 
 def p_exp(p):
 	'''exp : char
-		   | aritmetica
 		   | array
-		   | booleana
-		   | TkId
-		   | TkParAbre TkId TkParCierra'''
-	if len(p)>2:
-		p[0] = p[2]
-	else:
-		p[0] = p[1]
+		   | operacion'''
+	p[0] = p[1]
 
-def p_aritmetica(p):
-	#OJO revisar lo del punto porque no entiendo########
-	'''aritmetica : TkId TkPunto TkNum
+def p_operacion(p):
+	'''operacion : TkParAbre operacion TkParCierra
+				  | operacion TkSuma operacion
+				  | operacion TkResta operacion
+				  | operacion TkMult operacion
+				  | operacion TkDiv operacion
+				  | operacion TkMod operacion
+				  | TkId TkPunto TkNum
+				  | TkMenos operacion
+				  | operacion TkConjuncion operacion
+				  | operacion TkDisyuncion operacion
+				  | operacion TkIgual operacion
+				  | operacion TkDiferente operacion
+				  | TkNegacion operacion
+				  | operacion TkMenor operacion
+				  | operacion TkMenorIgual operacion
+				  | operacion TkMayor operacion
+				  | operacion TkMayorIgual operacion
+				  | TkId
 				  | TkNum
-				  | TkParAbre aritmetica TkParCierra
-				  | aritmetica TkSuma aritmetica
-				  | TkId TkSuma TkId
-				  | aritmetica TkSuma TkId
-				  | TkId TkSuma aritmetica
-				  | aritmetica TkResta aritmetica
-				  | TkId TkResta TkId
-				  | aritmetica TkResta TkId
-				  | TkId TkResta aritmetica
-				  | aritmetica TkMult aritmetica
-				  | TkId TkMult TkId
-				  | aritmetica TkMult TkId
-				  | TkId TkMult aritmetica
-				  | aritmetica TkDiv aritmetica
-				  | TkId TkDiv TkId
-				  | aritmetica TkDiv TkId
-				  | TkId TkDiv aritmetica
-				  | aritmetica TkMod aritmetica
-				  | TkId TkMod TkId
-				  | aritmetica TkMod TkId
-				  | TkId TkMod aritmetica
-				  | TkMenos aritmetica
-				  | TkMenos TkId''' #menos unario
+				  | TkTrue
+				  | TkFalse'''
 	if len(p)==4:
 		if p[1]=="(" and p[3]==")":
 			p[0] = p[2]
 		elif p[2]=="+":
-			p[0] = Node('suma',[p[1],p[3]],p[2])
+			p[0] = Node('operacion-suma',[p[1],p[3]],p[2])
 		elif p[2]=="-":
-			p[0] = Node('resta',[p[1],p[3]],p[2])
+			p[0] = Node('operacion-resta',[p[1],p[3]],p[2])
 		elif p[2]=="*":
-			p[0] = Node('multiplicacion',[p[1],p[3]],p[2])
+			p[0] = Node('operacion-multiplicacion',[p[1],p[3]],p[2])
 		elif p[2]=="/":
-			p[0] = Node('division',[p[1],p[3]],p[2])
+			p[0] = Node('operacion-division',[p[1],p[3]],p[2])
 		elif p[2]=="%":
-			p[0] = Node('modulo',[p[1],p[3]],p[2])
-		else:
-			p[0] = Node('punto',[p[1],p[3]],p[2])
+			p[0] = Node('operacion-modulo',[p[1],p[3]],p[2])
+		elif p[2]==".":
+			p[0] = Node('operacion-punto',[p[1],p[3]],p[2])
+		elif p[2]=="/\\":
+			p[0] = Node('operacion-conjuncion',[p[1],p[3]],p[2])
+		elif p[2]=="\\/":
+			p[0] = Node('operacion-disyuncion',[p[1],p[3]],p[2])
+		elif p[2]=="=":
+			p[0] = Node('operacion-igual',[p[1],p[3]],p[2])
+		elif p[2]=="/=":
+			p[0] = Node('operacion-diferente',[p[1],p[3]],p[2])
+		elif p[2]=="<":
+			p[0] = Node('operacion-menor',[p[1],p[3]],p[2])
+		elif p[2]=="<=":
+			p[0] = Node('operacion-menorIgual',[p[1],p[3]],p[2])
+		elif p[2]==">":
+			p[0] = Node('operacion-mayor',[p[1],p[3]],p[2])
+		elif p[2]==">=":
+			p[0] = Node('operacion-mayorIgual',[p[1],p[3]],p[2])
 	elif len(p)==3:
-		p[0] = Node('menosUnario',[p[2]],p[1])
+		if p[1]=="-":
+			p[0] = Node('operacion-menosUnario',[p[2]],p[1])
+		if p[1]=="not":
+			p[0] = Node('operacion-negacion',[p[2]],p[1])
 	else:
 		p[0] = p[1]
 
-def p_booleana(p):
-	'''booleana : TkTrue
-				| TkFalse
-				| TkParAbre booleana TkParCierra
-				| booleana TkConjuncion booleana
-				| TkId TkConjuncion booleana
-				| booleana TkConjuncion TkId
-				| TkId TkConjuncion TkId
-				| booleana TkDisyuncion booleana
-				| TkId TkDisyuncion booleana
-				| booleana TkDisyuncion TkId
-				| TkId TkDisyuncion TkId
-				| booleana TkIgual booleana
-				| TkId TkIgual booleana
-				| booleana TkIgual TkId
-				| TkId TkIgual TkId
-				| booleana TkDiferente booleana
-				| TkId TkDiferente booleana
-				| booleana TkDiferente TkId
-				| TkId TkDiferente TkId
-				| TkNegacion booleana
-				| TkNegacion TkId'''
-	if len(p)==4:
-		if p[1]=="(" and p[3]==")":
-			p[0] = p[2]
-		elif p[2]=="/\\":
-			p[0] = Node('conjuncion',[p[1],p[3]],p[2])
-		elif p[2]=="\\/":
-			p[0] = Node('disyuncion',[p[1],p[3]],p[2])
-		elif p[2]=="=":
-			p[0] = Node('igual',[p[1],p[3]],p[2])
-		elif p[2]=="/=":
-			p[0] = Node('diferente',[p[1],p[3]],p[2])
-	elif len(p)==3:
-		p[0] = Node('negacion',[p[2]],p[1])
-	else:
-		p[0] = p[1]
+# def p_aritmetica(p):
+# 	#OJO revisar lo del punto porque no entiendo########
+# 	'''aritmetica : TkId TkPunto TkNum
+# 				  | TkNum
+# 				  | TkParAbre aritmetica TkParCierra
+# 				  | aritmetica TkSuma aritmetica
+# 				  | TkId TkSuma TkId
+# 				  | aritmetica TkSuma TkId
+# 				  | TkId TkSuma aritmetica
+# 				  | aritmetica TkResta aritmetica
+# 				  | TkId TkResta TkId
+# 				  | aritmetica TkResta TkId
+# 				  | TkId TkResta aritmetica
+# 				  | aritmetica TkMult aritmetica
+# 				  | TkId TkMult TkId
+# 				  | aritmetica TkMult TkId
+# 				  | TkId TkMult aritmetica
+# 				  | aritmetica TkDiv aritmetica
+# 				  | TkId TkDiv TkId
+# 				  | aritmetica TkDiv TkId
+# 				  | TkId TkDiv aritmetica
+# 				  | aritmetica TkMod aritmetica
+# 				  | TkId TkMod TkId
+# 				  | aritmetica TkMod TkId
+# 				  | TkId TkMod aritmetica
+# 				  | TkMenos aritmetica
+# 				  | TkMenos TkId''' #menos unario
+# 	if len(p)==4:
+# 		if p[1]=="(" and p[3]==")":
+# 			p[0] = p[2]
+# 		elif p[2]=="+":
+# 			p[0] = Node('suma',[p[1],p[3]],p[2])
+# 		elif p[2]=="-":
+# 			p[0] = Node('resta',[p[1],p[3]],p[2])
+# 		elif p[2]=="*":
+# 			p[0] = Node('multiplicacion',[p[1],p[3]],p[2])
+# 		elif p[2]=="/":
+# 			p[0] = Node('division',[p[1],p[3]],p[2])
+# 		elif p[2]=="%":
+# 			p[0] = Node('modulo',[p[1],p[3]],p[2])
+# 		else:
+# 			p[0] = Node('punto',[p[1],p[3]],p[2])
+# 	elif len(p)==3:
+# 		p[0] = Node('menosUnario',[p[2]],p[1])
+# 	else:
+# 		p[0] = p[1]
+
+# def p_booleana(p):
+# 	'''booleana : TkTrue
+# 				| TkFalse
+# 				| TkParAbre booleana TkParCierra
+# 				| booleana TkConjuncion booleana
+# 				| TkId TkConjuncion booleana
+# 				| booleana TkConjuncion TkId
+# 				| TkId TkConjuncion TkId
+# 				| booleana TkDisyuncion booleana
+# 				| TkId TkDisyuncion booleana
+# 				| booleana TkDisyuncion TkId
+# 				| TkId TkDisyuncion TkId
+# 				| booleana TkIgual booleana
+# 				| TkId TkIgual booleana
+# 				| booleana TkIgual TkId
+# 				| TkId TkIgual TkId
+# 				| booleana TkDiferente booleana
+# 				| TkId TkDiferente booleana
+# 				| booleana TkDiferente TkId
+# 				| TkId TkDiferente TkId
+# 				| TkNegacion booleana
+# 				| TkNegacion TkId'''
+# 	if len(p)==4:
+# 		if p[1]=="(" and p[3]==")":
+# 			p[0] = p[2]
+# 		elif p[2]=="/\\":
+# 			p[0] = Node('conjuncion',[p[1],p[3]],p[2])
+# 		elif p[2]=="\\/":
+# 			p[0] = Node('disyuncion',[p[1],p[3]],p[2])
+# 		elif p[2]=="=":
+# 			p[0] = Node('igual',[p[1],p[3]],p[2])
+# 		elif p[2]=="/=":
+# 			p[0] = Node('diferente',[p[1],p[3]],p[2])
+# 	elif len(p)==3:
+# 		p[0] = Node('negacion',[p[2]],p[1])
+# 	else:
+# 		p[0] = p[1]
 
 def p_array(p):
 	'''array : array TkConcatenacion array
@@ -488,44 +548,43 @@ def p_char(p):
 	else:
 		p[0] = Node('valorAscii',[p[2]],p[1])
 
-def p_relacionales(p):
-	'''relacionales : booleana
-					| aritmetica TkMenor aritmetica
-					| aritmetica TkMenorIgual aritmetica
-					| aritmetica TkMayor aritmetica
-					| aritmetica TkMayorIgual aritmetica
-					| aritmetica TkIgual aritmetica
-					| aritmetica TkDiferente aritmetica'''
-	if len(p)==2:
-		p[0] = p[1]
-	else:
-		if p[2]=="<":
-			p[0] = Node('menor',[p[1],p[3]],p[2])
-		elif p[2]=="<=":
-			p[0] = Node('menorIgual',[p[1],p[3]],p[2])
-		elif p[2]==">":
-			p[0] = Node('mayor',[p[1],p[3]],p[2])
-		elif p[2]==">=":
-			p[0] = Node('mayorIgual',[p[1],p[3]],p[2])
-		elif p[2]=="=":
-			p[0] = Node('igual',[p[1],p[3]],p[2])
-		elif p[2]=="/=":
-			p[0] = Node('diferente',[p[1],p[3]],p[2])
+# def p_relacionales(p):
+# 	'''relacionales : booleana
+# 					| aritmetica TkMenor aritmetica
+# 					| aritmetica TkMenorIgual aritmetica
+# 					| aritmetica TkMayor aritmetica
+# 					| aritmetica TkMayorIgual aritmetica
+# 					| aritmetica TkIgual aritmetica
+# 					| aritmetica TkDiferente aritmetica'''
+# 	if len(p)==2:
+# 		p[0] = p[1]
+# 	else:
+# 		if p[2]=="<":
+# 			p[0] = Node('menor',[p[1],p[3]],p[2])
+# 		elif p[2]=="<=":
+# 			p[0] = Node('menorIgual',[p[1],p[3]],p[2])
+# 		elif p[2]==">":
+# 			p[0] = Node('mayor',[p[1],p[3]],p[2])
+# 		elif p[2]==">=":
+# 			p[0] = Node('mayorIgual',[p[1],p[3]],p[2])
+# 		elif p[2]=="=":
+# 			p[0] = Node('igual',[p[1],p[3]],p[2])
+# 		elif p[2]=="/=":
+# 			p[0] = Node('diferente',[p[1],p[3]],p[2])
 
 # Error rule for syntax errors
 def p_error(p):
 	print("Syntax error in input")
 
 #Inicializacion del lexer
-lexer = lex.lex()
 data=read_given_file(sys.argv[1])
+lexer = lex.lex()
 lexer.input(data)
 while True:
 	tok = lexer.token()
 	if not tok: 
 		break      
 	listar_token(tok)
-print_tokens_or_errors()
 
 def buildtree(node):
 	sting=""
@@ -545,8 +604,12 @@ def buildtree(node):
 			sting+=node
 	return sting
 
-#Inicializacion del parser
 yacc.yacc()
 y = yacc.parse(data)
-print(buildtree(y))
+if print_tokens_or_errors()==0:
+	p = buildtree(y)
+	if p=="":
+		print("()")
+	else:
+		print(p)
 	
