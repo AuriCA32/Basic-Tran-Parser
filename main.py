@@ -226,10 +226,16 @@ def p_start(p):
 			 | TkBegin cond TkEnd
 			 | TkWith declaracionVar TkBegin TkEnd
 			 | TkWith TkBegin TkEnd
+			 | TkWith TkBegin cond TkEnd
 			 | TkBegin TkEnd'''
 	if len(p)>4:
-		p[0] = Node('comienzo',[p[2],p[4]],None)
-	elif len(p)>3:
+		if p[2] == "begin":
+			p[0] = p[3]
+		elif p[3] == "begin" and p[4]=="end":
+			p[0] = Node('comienzo',[p[2]],None)
+		else:
+			p[0] = Node('comienzo',[p[2],p[4]],None)
+	elif len(p)==4 and p[2] != "begin":
 		p[0] = p[2]
 	else:
 		p[0] = None
@@ -329,19 +335,29 @@ def p_cond(p):
 			| TkWith declaracionVar TkBegin cond TkEnd 
 			| TkWith declaracionVar TkBegin cond TkEnd cond
 			| TkId TkAsignacion exp TkPuntoComa
-			| TkId TkAsignacion exp TkPuntoComa cond'''	
+			| TkId TkAsignacion exp TkPuntoComa cond
+			| TkId TkCorcheteAbre TkNum TkCorcheteCierra TkAsignacion exp TkPuntoComa
+			| TkId TkCorcheteAbre TkNum TkCorcheteCierra TkAsignacion exp TkPuntoComa cond'''	
 	if p[1]=="with":
 		Nodo = Node('beginInterno',[p[2],p[4]],p[3])
 		if len(p)>6:
 			p[0] = Node('secuencia',[Nodo,p[6]],None)
 		else:
 			p[0] = Nodo
-	elif len(p)>4 and p[4]==";":
-		Nodo = Node('asignacion',[p[1],p[3]],p[2])
-		if len(p)>5:
-			p[0] = Node('secuencia',[Nodo,p[5]],None)
+	elif len(p)>4 and p[1]!="with":
+		if p[4]==";":
+			Nodo = Node('asignacion',[p[1],p[3]],p[2])
+			if len(p)>5:
+				p[0] = Node('secuencia',[Nodo,p[5]],None)
+			else:
+				p[0] = Nodo
 		else:
-			p[0] = Nodo
+			NodoInterno = Node('accederEnArreglo',[p[1],p[3]],p[2])
+			Nodo = Node('asignacion',[NodoInterno,p[6]],p[5])
+			if len(p)>8:
+				p[0] = Node('secuencia',[Nodo,p[8]],None)
+			else:
+				p[0] = Nodo
 	else:
 		if len(p)>2:
 			p[0] = Node('secuencia',[p[1],p[2]],None)
