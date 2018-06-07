@@ -1,12 +1,8 @@
 with
     var a <- true,b <- false,c : bool
     var x, y : int
+    var z <- 'z' : char
+    var m : array [3] of int
 begin
-    if a = b ->
-        c <- true;
-        x <- 3;
-        y <- 2 + 1;
-    otherwise ->
-        c <- false;
-    end
+	
 end

@@ -220,6 +220,8 @@ def p_program(p):
 def p_start(p):
 	'''start : TkWith declaracionVar TkBegin cond TkEnd
 			 | TkBegin cond TkEnd
+			 | TkWith declaracionVar TkBegin TkEnd
+			 | TkWith TkBegin TkEnd
 			 | TkBegin TkEnd'''
 	if len(p)>4:
 		p[0] = Node('comienzo',[p[2],p[4]],None)
@@ -646,16 +648,21 @@ caracter=["siguienteChar",
 "valorAscii"]
 
 anterior=""
+cond=""
 def print_tree(node,n):
 	sting=""
-	global anterior
+	global anterior,cond
 	if node==None:
 		return sting
 	if isinstance(node,Node):
 		s=""
 		if node.type in operacion:
 			s=node.type[10:]
-			sting+="operacion: "+s
+			if cond in ["if","while","if_otherwise"]:
+				sting+="guardia: "+s
+				cond=""
+			else:
+				sting+="operacion: "+s
 			anterior="izq"
 		elif node.type in declaracion:
 			if "secuencia" in node.type:
@@ -683,29 +690,48 @@ def print_tree(node,n):
 			sting+="SECUENCIACION"
 		elif node.type=="condicional":
 			sting+="CONDICIONAL"
+			cond="if"
 		elif node.type=="condicional_otherwise":
 			sting+="CONDICIONAL"
+			cond="if_otherwise"
 		elif node.type=="while":
 			sting+="ITERACION INDETERMINADA"
+			cond="while"
 		elif node.type=="for":
 			sting+="ITERACION DETERMINADA"
+			cond="for"
+			anterior="inf"
 		elif node.type=="for_step":
 			sting+="ITERACION DETERMINADA"
+			cond="for_step"
+			anterior="inf"
 		elif node.type=="read" or node.type=="print":
 			sting+="ENTRADA/SALIDA"
 		elif node.type in arreglo:
 			sting+="OPERACION SOBRE ARREGLO"
 		elif node.type in caracter:
 			sting+="OPERACION SOBRE CARACTER"
+		elif cond=="if":
+			sting+="exito: "
+			cond=""
+		elif cond=="if_otherwise":
+			sting+="exito: "
+			cond="otherwise"
+			n-=1
+		elif cond=="otherwise":
+			n-=1
+			sting+="fallo: "
+			cond=""
 		else:
 			sting+=node.type
+			n-=1
 		#if node.leaf!=None:
 		#	sting+=", HOJA: "+node.leaf
 		n+=1
 		for child in node.children:
 			sting+="\n"+("\t"*n)+print_tree(child,n)
 	else: #Terminales
-		
+		##FALTA CHAR Y ARRAY
 		if isinstance(node,int):
 			if anterior=="izq":
 				sting+="operador izquierdo: LITERAL ENTERO\n"
@@ -725,6 +751,25 @@ def print_tree(node,n):
 				anterior=""
 			elif anterior=="array":
 				sting+="contenedor: ARREGLO\n"
+			elif cond=="for":
+				if anterior=="inf":
+					sting+="valor inferior: "+str(node)
+					anterior="sup"
+				elif anterior=="sup":
+					sting+="valor superior: "+str(node)
+					anterior=""
+					cond=""
+			elif cond=="for_step":
+				if anterior=="inf":
+					sting+="valor inferior: "+str(node)
+					anterior="sup"
+				elif anterior=="sup":
+					sting+="valor superior: "+str(node)
+					anterior="paso"
+				elif anterior=="paso":
+					sting+="paso: "+str(node)
+					anterior=""
+					cond=""
 			else:
 				sting+="valor: "+str(node)
 		elif node=="true" or node=="false":
@@ -748,22 +793,38 @@ def print_tree(node,n):
 				sting+="contenedor: ARREGLO\n"
 			else:
 				sting+="valor: "+str(node)
-		elif node=="int" or node=="bool" or node=="char" or node=="array":
-			if anterior=="var":
-				sting+="contenedor: VARIABLE\n"
-				sting+=("\t"*n)+"expresion: "+node
-				anterior=""
-			elif anterior=="array":
-				sting+="contenedor: ARREGLO\n"
+		elif node in ["int","bool","char","array"]:
+			if anterior=="array":
+				sting+="expresion: ARREGLO\n"
 			else:
-				sting+="expresion: "+node
+				if node=="int":
+					sting+="expresion: LITERAL ENTERO"
+				elif node=="bool":
+					sting+="expresion: BOOLEANO"
+				elif node=="char":
+					sting+="expresion: CARACTER"
+				elif node=="array":
+					sting+="expresion: ARREGLO"
+				anterior=""
 		else:
 			if anterior=="var":
 				sting+="contenedor: VARIABLE\n"
-				sting+=("\t"*n)+"expresion: "+node
+				sting+=("\t"*n)+"identificador: "+node
 				anterior=""
-			else:
+			elif anterior=="izq":
+				sting+="operador izquierdo: VARIABLE\n"
+				sting+=("\t"*n)+"valor: "+str(node)
+				anterior="der"
+			elif anterior=="der":
+				sting+="operador derecho: VARIABLE\n"
+				sting+=("\t"*n)+"valor: "+str(node)
+				anterior=""
+			elif anterior=="asig":
 				sting+="identificador: "+node
+				anterior="valor"
+			elif anterior=="valor":
+				sting+="valor: "+node
+				anterior=""
 		# if isinstance(node,int):
 		# 	sting+="valor: "+str(node)
 		# elif node=="true" or node=="false":
