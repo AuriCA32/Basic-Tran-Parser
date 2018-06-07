@@ -200,7 +200,9 @@ precedence=(
 	('left', 'TkSuma', 'TkResta'),
 	('left', 'TkMult', 'TkDiv', 'TkMod'),
 	('left', 'TkConjuncion', 'TkDisyuncion'),
-	('right', 'TkMenos', 'TkNegacion')
+	('right', 'TkMenos', 'TkNegacion'),
+	('left', 'TkConcatenacion'),
+	('right', 'TkShift')
 	)
 
 #Crea el arbol
@@ -374,7 +376,6 @@ def p_print(p):
 
 def p_exp(p):
 	'''exp : char
-		   | array
 		   | operacion'''
 	p[0] = p[1]
 
@@ -396,6 +397,9 @@ def p_operacion(p):
 				  | operacion TkMenorIgual operacion
 				  | operacion TkMayor operacion
 				  | operacion TkMayorIgual operacion
+				  | operacion TkConcatenacion operacion
+				  | TkShift operacion
+				  | operacion TkCorcheteAbre TkNum TkCorcheteCierra
 				  | TkId
 				  | TkNum
 				  | TkTrue
@@ -431,11 +435,17 @@ def p_operacion(p):
 			p[0] = Node('operacion-mayor',[p[1],p[3]],p[2])
 		elif p[2]==">=":
 			p[0] = Node('operacion-mayorIgual',[p[1],p[3]],p[2])
+		elif p[2]=="::":
+			p[0] = Node('concatenacion',[p[1],p[3]],p[2])
+		else:
+			p[0] = Node('accederEnArreglo',[p[1],p[3]],p[2])
 	elif len(p)==3:
 		if p[1]=="-":
 			p[0] = Node('operacion-menosUnario',[p[2]],p[1])
 		if p[1]=="not":
 			p[0] = Node('operacion-negacion',[p[2]],p[1])
+		else:
+			p[0] = Node('shift',[p[2]],p[1])
 	else:
 		p[0] = p[1]
 
@@ -524,24 +534,18 @@ def p_operacion(p):
 # 	else:
 # 		p[0] = p[1]
 
-def p_array(p):
-	'''array : array TkConcatenacion array
-			 | TkId TkConcatenacion array
-			 | array TkConcatenacion TkId
-			 | TkId TkConcatenacion TkId
-			 | TkShift array
-			 | TkShift TkId
-			 | array TkCorcheteAbre TkNum TkCorcheteCierra
-			 | TkParAbre array TkParCierra'''
-	if len(p)>3:
-		if p[1]=="(" and p[3]==")":
-			p[0] = p[2]
-		elif p[2]=="::":
-			p[0] = Node('concatenacion',[p[1],p[3]],p[2])
-		else:
-			p[0] = Node('accederEnArreglo',[p[1],p[3]],p[2])
-	elif len(p)==3:
-		p[0] = Node('shift',[p[2]],p[1])
+# def p_array(p):
+# 	'''array : array TkCorcheteAbre TkNum TkCorcheteCierra
+# 			 | TkParAbre array TkParCierra'''
+# 	if len(p)>3:
+# 		if p[1]=="(" and p[3]==")":
+# 			p[0] = p[2]
+# 		# elif p[2]=="::":
+# 		# 	p[0] = Node('concatenacion',[p[1],p[3]],p[2])
+# 		else:
+# 			p[0] = Node('accederEnArreglo',[p[1],p[3]],p[2])
+# 	elif len(p)==3:
+# 		p[0] = Node('shift',[p[2]],p[1])
 
 def p_char(p):
 	'''char : TkCaracter TkSiguienteCar
