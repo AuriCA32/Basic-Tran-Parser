@@ -5,4 +5,5 @@ with
     var m : array [3] of int
 begin
 	a <- b + c;
+	a <- 3;
 end

@@ -750,11 +750,10 @@ def print_tree(node,n):
 				sting+=("\t"*n)+"valor: "+str(node)
 				anterior=""
 			elif anterior=="var":
-				sting+="contenedor: VARIABLE\n"
-				sting+=("\t"*n)+"valor: "+str(node)
+				sting+="ARREGLO de tamaño: "+str(node)
 				anterior=""
 			elif anterior=="array":
-				sting+="contenedor: ARREGLO\n"
+				anterior=""
 			elif cond=="for":
 				if anterior=="inf":
 					sting+="valor inferior: "+str(node)
@@ -794,7 +793,7 @@ def print_tree(node,n):
 				sting+=("\t"*n)+"valor: "+str(node)
 				anterior=""
 			elif anterior=="array":
-				sting+="contenedor: ARREGLO\n"
+				anterior=""
 			else:
 				sting+="valor: "+str(node)
 		elif node in ["int","bool","char","array"]:
@@ -806,7 +805,7 @@ def print_tree(node,n):
 				elif node=="bool":
 					sting+="expresion: BOOLEANO"
 				elif node=="char":
-					sting+="expresion: CARACTER"
+					sting+="\texpresion: CARACTER"
 				elif node=="array":
 					sting+="expresion: ARREGLO"
 				anterior=""
@@ -814,7 +813,7 @@ def print_tree(node,n):
 			if anterior=="var":
 				sting+="contenedor: VARIABLE\n"
 				sting+=("\t"*n)+"identificador: "+node
-				anterior=""
+				#anterior=""
 			elif anterior=="izq":
 				sting+="operador izquierdo: VARIABLE\n"
 				sting+=("\t"*n)+"valor: "+str(node)
