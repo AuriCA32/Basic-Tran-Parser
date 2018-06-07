@@ -5,6 +5,7 @@ import re
 
 #Listas de tokens y errores
 tokError=[] #Global, si esta vacio no hay errores
+errores_sintacticos=[]
 tokensList=[]
 
 # Lista de nombres de palabras reservadas
@@ -169,6 +170,9 @@ def print_tokens_or_errors():
 		for i in range(len(tokError)):
 			print(tokError[i])
 		return -1
+	if(len(errores_sintacticos)>0):
+		print(errores_sintacticos[0])
+		return -1
 	return 0
 	# else:
 	# 	for i in range(len(tokensList)):
@@ -295,7 +299,7 @@ def p_declaracion_array(p):
 	'''declaracionArray : TkId TkComa declaracionArray
 						| TkId TkDosPuntos TkArray TkCorcheteAbre TkNum TkCorcheteCierra TkOf type'''
 	if len(p)>4:
-		p[0]=Node('declaracion_array',[p[1],p[5],p[8]],p[3])
+		p[0]=Node('declaracionArray',[p[1],p[5],p[8]],p[3])
 	else:
 		p[0]=Node('secuencia_declaracionArray',[p[1],p[3]],None)
 
@@ -342,7 +346,7 @@ def p_if(p):
 	'''if : TkIf operacion TkHacer cond TkOtherwise TkHacer cond TkEnd
 		  | TkIf operacion TkHacer cond TkEnd'''
 	if len(p)>6:
-		p[0] = Node('condicional',[p[2],p[4],p[7]],p[1])
+		p[0] = Node('condicional_otherwise',[p[2],p[4],p[7]],p[1])
 	else:
 		p[0] = Node('condicional',[p[2],p[4]],p[1])
 
@@ -354,7 +358,7 @@ def p_for(p):
 	'''for : TkFor TkId TkFrom TkNum TkTo TkNum TkStep TkNum TkHacer cond TkEnd
 		   | TkFor TkId TkFrom TkNum TkTo TkNum TkHacer cond TkEnd'''
 	if len(p)>10:
-		p[0] = Node('for',[p[2],p[4],p[6],p[8],p[10]],p[1])
+		p[0] = Node('for_step',[p[2],p[4],p[6],p[8],p[10]],p[1])
 	else:
 		p[0] = Node('for',[p[2],p[4],p[6],p[8]],p[1])
 
@@ -574,6 +578,7 @@ def p_char(p):
 
 # Error rule for syntax errors
 def p_error(p):
+	errores_sintacticos.append(p)
 	print("Syntax error in input")
 
 #Inicializacion del lexer
@@ -604,12 +609,179 @@ def buildtree(node):
 			sting+=node
 	return sting
 
+declaracion=["secuencia_declaraciones",
+"secuencia_declaracionId",
+"secuencia_declaracionIdNum",
+"declaracionIdNum",
+"secuencia_declaracionIdChar",
+"declaracionIdChar",
+"secuencia_declaracionIdBool",
+"declaracionIdBool",
+"declaracionArray",
+"secuencia_declaracionArray"]
+
+operacion=["operacion-suma",
+"operacion-resta",
+"operacion-multiplicacion",
+"operacion-division",
+"operacion-modulo",
+"operacion-punto",
+"operacion-conjuncion",
+"operacion-disyuncion",
+"operacion-igual",
+"operacion-diferente",
+"operacion-menor",
+"operacion-menorIgual",
+"operacion-mayor",
+"operacion-mayorIgual",
+"operacion-menosUnario",
+"operacion-negacion"]
+
+arreglo=["concatenacion",
+"accederEnArreglo",
+"shift"]
+
+caracter=["siguienteChar",
+"anteriorChar",
+"valorAscii"]
+
+anterior=""
+def print_tree(node,n):
+	sting=""
+	global anterior
+	if node==None:
+		return sting
+	if isinstance(node,Node):
+		s=""
+		if node.type in operacion:
+			s=node.type[10:]
+			sting+="operacion: "+s
+			anterior="izq"
+		elif node.type in declaracion:
+			if "secuencia" in node.type:
+				s=node.type[10:]
+			if "Char" in s:
+				sting+="DECLARACION DE CARACTER"
+				anterior="var"
+			elif "Bool" in s:
+				sting+="DECLARACION DE BOOLEANO"
+				anterior="var"
+			elif "Num" in s:
+				sting+="DECLARACION DE ENTERO"
+				anterior="var"
+			elif "Array" in s:
+				sting+="DECLARACION DE ARREGLO"
+				anterior="array"
+			else:
+				sting+="DECLARACION"
+				anterior="var"
+				n-=1
+		elif node.type=="asignacion":
+			sting+="ASIGNACION"
+			anterior="asig"
+		elif node.type=="comienzo" or node.type=="beginInterno":
+			sting+="SECUENCIACION"
+		elif node.type=="condicional":
+			sting+="CONDICIONAL"
+		elif node.type=="condicional_otherwise":
+			sting+="CONDICIONAL"
+		elif node.type=="while":
+			sting+="ITERACION INDETERMINADA"
+		elif node.type=="for":
+			sting+="ITERACION DETERMINADA"
+		elif node.type=="for_step":
+			sting+="ITERACION DETERMINADA"
+		elif node.type=="read" or node.type=="print":
+			sting+="ENTRADA/SALIDA"
+		elif node.type in arreglo:
+			sting+="OPERACION SOBRE ARREGLO"
+		elif node.type in caracter:
+			sting+="OPERACION SOBRE CARACTER"
+		else:
+			sting+=node.type
+		#if node.leaf!=None:
+		#	sting+=", HOJA: "+node.leaf
+		n+=1
+		for child in node.children:
+			sting+="\n"+("\t"*n)+print_tree(child,n)
+	else: #Terminales
+		
+		if isinstance(node,int):
+			if anterior=="izq":
+				sting+="operador izquierdo: LITERAL ENTERO\n"
+				sting+=("\t"*n)+"valor: "+str(node)
+				anterior="der"
+			elif anterior=="der":
+				sting+="operador derecho: LITERAL ENTERO\n"
+				sting+=("\t"*n)+"valor: "+str(node)
+				anterior=""
+			elif anterior=="asig":
+				sting+="expresion: LITERAL ENTERO\n"
+				sting+=("\t"*n)+"valor: "+str(node)
+				anterior=""
+			elif anterior=="var":
+				sting+="contenedor: VARIABLE\n"
+				sting+=("\t"*n)+"valor: "+str(node)
+				anterior=""
+			elif anterior=="array":
+				sting+="contenedor: ARREGLO\n"
+			else:
+				sting+="valor: "+str(node)
+		elif node=="true" or node=="false":
+			if anterior=="izq":
+				sting+="operador izquierdo: BOOLEANO\n"
+				sting+=("\t"*n)+"valor: "+str(node)
+				anterior="der"
+			elif anterior=="der":
+				sting+="operador derecho: BOOLEANO\n"
+				sting+=("\t"*n)+"valor: "+str(node)
+				anterior=""
+			elif anterior=="asig":
+				sting+="expresion: BOOLEANO\n"
+				sting+=("\t"*n)+"valor: "+str(node)
+				anterior=""
+			elif anterior=="var":
+				sting+="contenedor: VARIABLE\n"
+				sting+=("\t"*n)+"valor: "+str(node)
+				anterior=""
+			elif anterior=="array":
+				sting+="contenedor: ARREGLO\n"
+			else:
+				sting+="valor: "+str(node)
+		elif node=="int" or node=="bool" or node=="char" or node=="array":
+			if anterior=="var":
+				sting+="contenedor: VARIABLE\n"
+				sting+=("\t"*n)+"expresion: "+node
+				anterior=""
+			elif anterior=="array":
+				sting+="contenedor: ARREGLO\n"
+			else:
+				sting+="expresion: "+node
+		else:
+			if anterior=="var":
+				sting+="contenedor: VARIABLE\n"
+				sting+=("\t"*n)+"expresion: "+node
+				anterior=""
+			else:
+				sting+="identificador: "+node
+		# if isinstance(node,int):
+		# 	sting+="valor: "+str(node)
+		# elif node=="true" or node=="false":
+		# 	sting+="valor: "+node
+		# elif node=="int" or node=="bool" or node=="char" or node=="array":
+		# 	sting+="expresion: "+node
+		# else:
+		# 	sting+="identificador: "+node
+	return sting
+
 yacc.yacc()
 y = yacc.parse(data)
-if print_tokens_or_errors()==0:
+if print_tokens_or_errors()==0: ####Falta formato de errores
 	p = buildtree(y)
 	if p=="":
 		print("()")
 	else:
 		print(p)
+		print()
+		print(print_tree(y,0))
 	

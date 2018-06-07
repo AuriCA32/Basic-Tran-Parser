@@ -1,8 +1,11 @@
 with
     var a <- true,b <- false,c : bool
+    var x, y : int
 begin
     if a = b ->
         c <- true;
+        x <- 3;
+        y <- 2 + 1;
     otherwise ->
         c <- false;
     end
