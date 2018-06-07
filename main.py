@@ -695,9 +695,9 @@ def print_tree(node,n):
 				sting+="DECLARACION DE ARREGLO"
 				anterior="array"
 			else:
-				sting+="DECLARACION"
+				sting+="DECLARACIONES"
 				anterior="var"
-				n-=1
+				#n-=1
 		elif node.type=="asignacion":
 			sting+="ASIGNACION"
 			anterior="asig"
@@ -723,9 +723,26 @@ def print_tree(node,n):
 		elif node.type=="read" or node.type=="print":
 			sting+="ENTRADA/SALIDA"
 		elif node.type in arreglo:
-			sting+="OPERACION SOBRE ARREGLO"
+			if node.type=="concatenacion":
+				sting+="operacion: concatenacion"
+				anterior="izq"
+				cond="concatenacion"
+			elif node.type=="accederEnArreglo":
+				sting+="operacion: acceder a elemento del arreglo"
+				cond="acceder"######FALTA
+			elif node.type=="shift":
+				sting+="operacion: shift"
+				cond="shift"
 		elif node.type in caracter:
-			sting+="OPERACION SOBRE CARACTER"
+			sting+="OPERACION SOBRE CARACTER"########FALTA
+			if node.type=="siguienteChar":
+				sting+="operacion: siguiente caracter"
+			elif node.type=="anteriorChar":
+				sting+="operacion: caracter anterior"
+			elif node.type=="valorAscii":
+				sting+="operacion: valor ASCII del caracter"
+		elif node.type=="secuencia":
+			sting+="SECUENCIA"
 		elif cond=="if":
 			sting+="exito: "
 			cond=""
@@ -738,7 +755,7 @@ def print_tree(node,n):
 			sting+="fallo: "
 			cond=""
 		else:
-			sting+=node.type
+			sting+="111"+node.type
 			n-=1
 		#if node.leaf!=None:
 		#	sting+=", HOJA: "+node.leaf
@@ -826,19 +843,34 @@ def print_tree(node,n):
 				sting+=("\t"*n)+"identificador: "+node
 				#anterior=""
 			elif anterior=="izq":
-				sting+="operador izquierdo: VARIABLE\n"
-				sting+=("\t"*n)+"valor: "+str(node)
-				anterior="der"
+				if cond=="concatenacion":
+					sting+="operador izquierdo: VARIABLE\n"
+					sting+=("\t"*n)+"arreglo: "+str(node)
+					anterior="der"
+				else:
+					sting+="operador izquierdo: VARIABLE\n"
+					sting+=("\t"*n)+"valor: "+str(node)
+					anterior="der"
 			elif anterior=="der":
-				sting+="operador derecho: VARIABLE\n"
-				sting+=("\t"*n)+"valor: "+str(node)
-				anterior=""
+				if cond=="concatenacion":
+					sting+="operador derecho: VARIABLE\n"
+					sting+=("\t"*n)+"arreglo: "+str(node)
+					anterior=""
+				else:
+					sting+="operador derecho: VARIABLE\n"
+					sting+=("\t"*n)+"valor: "+str(node)
+					anterior=""
 			elif anterior=="asig":
 				sting+="identificador: "+node
 				anterior="valor"
 			elif anterior=="valor":
-				sting+="valor: "+node
-				anterior=""
+				if cond=="shift":
+					sting+="arreglo: "+node
+					anterior=""
+				else:
+					sting+="valor: "+node
+					anterior=""
+				
 		# if isinstance(node,int):
 		# 	sting+="valor: "+str(node)
 		# elif node=="true" or node=="false":
