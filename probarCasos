@@ -1,0 +1,24 @@
+#!/bin/bash
+printcase=false
+contador=0
+echo "" > outputcasos
+while IFS='' read -r line || [[ -n "$line" ]]; do
+    #echo "Text read from file: $line"
+    if [[ $line = *"//CASO//"* ]]; then
+        contador=$(($contador+1))
+        printf "\n//Inicio Caso de Prueba $contador//\n\nInput:" >> outputcasos
+        echo "" > prueba
+        printcase=true
+    fi
+    if [[ $line = *"//END//"* ]]; then
+        printcase=false
+        cat prueba >> outputcasos
+        printf "\n***Resultado:\n" >> outputcasos
+        python3 main.py prueba >> outputcasos
+    fi
+    if [ "$printcase"=true ]; then
+        if [[ $line != *"//CASO//"* ]]&&[[ $line != *"//END//"* ]]; then
+            echo "$line" >> prueba
+        fi
+    fi
+done < "$1"
