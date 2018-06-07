@@ -201,6 +201,8 @@ precedence=(
 	('left', 'TkMult', 'TkDiv', 'TkMod'),
 	('left', 'TkConjuncion', 'TkDisyuncion'),
 	('right', 'TkMenos', 'TkNegacion'),
+	('left', 'TkSiguienteCar','TkAnteriorCar'),
+	('right', 'TkValorAscii'),
 	('left', 'TkConcatenacion'),
 	('right', 'TkShift')
 	)
@@ -375,8 +377,7 @@ def p_print(p):
 	p[0] = Node('print',[p[2]],p[1])
 
 def p_exp(p):
-	'''exp : char
-		   | operacion'''
+	'''exp : operacion'''
 	p[0] = p[1]
 
 def p_operacion(p):
@@ -400,10 +401,14 @@ def p_operacion(p):
 				  | operacion TkConcatenacion operacion
 				  | TkShift operacion
 				  | operacion TkCorcheteAbre TkNum TkCorcheteCierra
+				  | operacion TkSiguienteCar
+				  | operacion TkAnteriorCar
+				  | TkValorAscii operacion
 				  | TkId
 				  | TkNum
 				  | TkTrue
-				  | TkFalse'''
+				  | TkFalse
+				  | TkCaracter'''
 	if len(p)==4:
 		if p[1]=="(" and p[3]==")":
 			p[0] = p[2]
@@ -444,6 +449,12 @@ def p_operacion(p):
 			p[0] = Node('operacion-menosUnario',[p[2]],p[1])
 		if p[1]=="not":
 			p[0] = Node('operacion-negacion',[p[2]],p[1])
+		elif p[2]=="++":
+			p[0] = Node('siguienteChar',[p[1]],p[2])
+		elif p[2]=="--":
+			p[0] = Node('anteriorChar',[p[1]],p[2])
+		elif p[1]=="\#":
+			p[0] = Node('valorAscii',[p[2]],p[1])
 		else:
 			p[0] = Node('shift',[p[2]],p[1])
 	else:
@@ -547,16 +558,16 @@ def p_operacion(p):
 # 	elif len(p)==3:
 # 		p[0] = Node('shift',[p[2]],p[1])
 
-def p_char(p):
-	'''char : TkCaracter TkSiguienteCar
-			| TkCaracter TkAnteriorCar
-			| TkValorAscii TkCaracter'''
-	if p[2]=="++":
-		p[0] = Node('siguienteChar',[p[1]],p[2])
-	if p[2]=="--":
-		p[0] = Node('anteriorChar',[p[1]],p[2])
-	else:
-		p[0] = Node('valorAscii',[p[2]],p[1])
+# def p_char(p):
+# 	'''char : TkCaracter TkSiguienteCar
+# 			| TkCaracter TkAnteriorCar
+# 			| TkValorAscii TkCaracter'''
+# 	if p[2]=="++":
+# 		p[0] = Node('siguienteChar',[p[1]],p[2])
+# 	if p[2]=="--":
+# 		p[0] = Node('anteriorChar',[p[1]],p[2])
+# 	else:
+# 		p[0] = Node('valorAscii',[p[2]],p[1])
 
 # def p_relacionales(p):
 # 	'''relacionales : booleana
