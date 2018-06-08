@@ -4,14 +4,10 @@ with
     var z <- 'z' : char
     var m : array [3] of int
 begin
-	a <- a::b;
-	a <- $a;
-    for i from 1 to 4 ->
-        a <- a[0] + b[1];
-    end
-    if a > b ->
-    	a <- b + c;
-    otherwise ->
-    	a <- c;
-    end
+    b <- a++;
+    b <- a--;
+    b <- #a;
+    b <- 'a'++;
+    b <- 'a'--;
+    b <- #'a';
 end

@@ -740,7 +740,6 @@ def print_tree(node,n):
 				sting+="operacion: shift"
 				cond="shift"
 		elif node.type in caracter:
-			sting+="OPERACION SOBRE CARACTER"########FALTA
 			if node.type=="siguienteChar":
 				sting+="operacion: siguiente caracter"
 			elif node.type=="anteriorChar":
@@ -749,6 +748,7 @@ def print_tree(node,n):
 				sting+="operacion: valor ASCII del caracter"
 		elif node.type=="secuencia":
 			sting+="SECUENCIA"
+			n-=1
 		else:
 			sting+="111"+node.type
 			n-=1
@@ -839,6 +839,24 @@ def print_tree(node,n):
 				elif node=="array":
 					sting+="expresion: ARREGLO"
 				anterior=""
+		elif ("\'" in node) or ("\"" in node):
+			if anterior=="izq":
+				sting+="operador izquierdo: CARACTER\n"
+				sting+=("\t"*n)+"valor: "+str(node)
+				anterior="der"
+			elif anterior=="der":
+				sting+="operador derecho: CARACTER\n"
+				sting+=("\t"*n)+"valor: "+str(node)
+				anterior=""
+			elif anterior=="asig":
+				sting+="expresion: CARACTER\n"
+				sting+=("\t"*n)+"valor: "+str(node)
+				anterior=""
+			elif anterior=="var":
+				sting+="caracter: "+node
+				anterior=""
+			else:
+				sting+="valor: "+str(node)
 		else:
 			if anterior=="var":
 				sting+="contenedor: VARIABLE\n"
@@ -853,15 +871,18 @@ def print_tree(node,n):
 					sting+="operador izquierdo: VARIABLE\n"
 					sting+=("\t"*n)+"valor: "+str(node)
 					anterior="der"
+					cond=""
 			elif anterior=="der":
 				if cond=="concatenacion":
 					sting+="operador derecho: VARIABLE\n"
 					sting+=("\t"*n)+"arreglo: "+str(node)
 					anterior=""
+					cond=""
 				else:
 					sting+="operador derecho: VARIABLE\n"
 					sting+=("\t"*n)+"valor: "+str(node)
 					anterior=""
+					cond=""
 			elif anterior=="asig":
 				sting+="identificador: "+node
 				anterior="valor"
@@ -869,18 +890,10 @@ def print_tree(node,n):
 				if cond=="shift":
 					sting+="arreglo: "+node
 					anterior=""
+					cond=""
 				else:
 					sting+="valor: "+node
 					anterior=""
-				
-		# if isinstance(node,int):
-		# 	sting+="valor: "+str(node)
-		# elif node=="true" or node=="false":
-		# 	sting+="valor: "+node
-		# elif node=="int" or node=="bool" or node=="char" or node=="array":
-		# 	sting+="expresion: "+node
-		# else:
-		# 	sting+="identificador: "+node
 	return sting
 
 yacc.yacc()
