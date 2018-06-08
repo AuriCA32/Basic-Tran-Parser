@@ -9,4 +9,9 @@ begin
     for i from 1 to 4 ->
         a <- a[0] + b[1];
     end
+    if a > b ->
+    	a <- b + c;
+    otherwise ->
+    	a <- c;
+    end
 end
