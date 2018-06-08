@@ -1,4 +1,4 @@
-//CASO//
+//CASO// 1
 with
     var a <- true,b <- false,c : bool
     var x, y : int
@@ -13,7 +13,7 @@ begin
 end
 //END//
 
-//CASO//
+//CASO// 2
 with
     var a <- true,b <- false,c : bool
     var x, y : int
@@ -22,7 +22,108 @@ with
 begin
     a<-a::b;
     for i from 1 to 4 ->
-        a[0]<-a;
+        a<-a;
+    end
+end
+//END//
+
+//CASO// 3
+begin
+end
+//END//
+
+//CASO// 4
+with
+    var a <- true,b <- false,c : bool
+    var x, y : int
+    var z <- 'z' : char
+    var m : array [3] of int
+begin
+    a<-a::$b;
+    for i from 1 to 4 ->
+        a<-a;
+    end
+end
+//END//
+
+//CASO// 5
+with
+begin
+    a<-a::$b;
+    for i from 1 to 4 ->
+        a<-a;
+    end
+end
+//END//
+
+//CASO// 6
+with
+begin
+    a<-a[1]::$b;
+end
+//END//
+
+//CASO// 7
+with
+begin
+    a[0]<-a[1]::$b;
+end
+//END//
+
+//CASO// 8
+with
+begin
+    with
+    begin
+        a<-a::$b;
+        for i from 1 to 4 ->
+            a<-a;
+        end
+    end
+end
+//END//
+
+//CASO// 9
+with
+begin
+    with
+        var a : int
+    begin
+        a<-a::$b;
+        for i from 1 to 4 ->
+            a<-a;
+        end
+    end
+end
+//END//
+
+//CASO// 10
+begin
+    with
+        var a : int
+    begin
+        a<-a::$b;
+        for i from 1 to 4 ->
+            a<-a++;
+            a<-a--;
+        end
+    end
+end
+//END//
+
+//CASO// 11
+begin
+    if a/\b ->
+        print a;
+    end
+end
+//END//
+
+//CASO// 12
+begin
+    if a/\b ->
+        print a[1,2];
+        print a[1];
     end
 end
 //END//
