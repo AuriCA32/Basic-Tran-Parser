@@ -666,13 +666,13 @@ def print_tree(node,n):
 			sting+="SECUENCIA"
 			n-=1
 		else:
-			sting+="111"+node.type
+			sting+=node.type
 			n-=1
 
 		if anterior!="izq" and anterior!="der" and estado=="exito":
 			sting+="\n"+("\t"*n)+"EXITO"
 			estado="fracaso"
-		if anterior!="izq" and anterior!="der" and estado=="exito1":
+		elif anterior!="izq" and anterior!="der" and estado=="exito1":
 			sting+="\n"+("\t"*n)+"EXITO"
 			estado=""
 		elif anterior!="izq" and anterior!="der" and estado=="fracaso":
@@ -824,6 +824,6 @@ if print_tokens_or_errors()==0: ####Falta formato de errores
 	if p=="":
 		print("()")
 	else:
-		print(p)
+		#print(p)
 		print()
 		print(print_tree(y,0))
