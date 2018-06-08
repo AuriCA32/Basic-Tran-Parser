@@ -664,17 +664,23 @@ caracter=["siguienteChar",
 
 anterior=""
 cond=""
+estado=""
 def print_tree(node,n):
 	sting=""
-	global anterior,cond
+	global anterior,cond,estado
 	if node==None:
 		return sting
 	if isinstance(node,Node):
 		s=""
+
 		if node.type in operacion:
 			s=node.type[10:]
 			if cond in ["if","while","if_otherwise"]:
 				sting+="guardia: "+s
+				if cond=="if":
+					estado="exito"
+				elif cond=="if_otherwise":
+					estado="exito"
 				cond=""
 			else:
 				sting+="operacion: "+s
@@ -743,23 +749,19 @@ def print_tree(node,n):
 				sting+="operacion: valor ASCII del caracter"
 		elif node.type=="secuencia":
 			sting+="SECUENCIA"
-		elif cond=="if":
-			sting+="exito: "
-			cond=""
-		elif cond=="if_otherwise":
-			sting+="exito: "
-			cond="otherwise"
-			n-=1
-		elif cond=="otherwise":
-			n-=1
-			sting+="fallo: "
-			cond=""
 		else:
 			sting+="111"+node.type
 			n-=1
-		#if node.leaf!=None:
-		#	sting+=", HOJA: "+node.leaf
+
+		if anterior!="izq" and anterior!="der" and estado=="exito":
+			sting+="\n"+("\t"*n)+"EXITO"
+			estado="fracaso"
+		elif anterior!="izq" and anterior!="der" and estado=="fracaso":
+			sting+="\n"+("\t"*n)+"FRACASO"
+			estado=""
+
 		n+=1
+
 		for child in node.children:
 			sting+="\n"+("\t"*n)+print_tree(child,n)
 	else: #Terminales
