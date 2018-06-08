@@ -15,6 +15,7 @@ while IFS='' read -r line || [[ -n "$line" ]]; do
         cat prueba >> outputcasos
         printf "\n***Resultado:\n" >> outputcasos
         python3 main.py prueba >> outputcasos
+        printf "\n\n\n" >> outputcasos
     fi
     if [ "$printcase"=true ]; then
         if [[ $line != *"//CASO//"* ]]&&[[ $line != *"//END//"* ]]; then

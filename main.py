@@ -204,7 +204,9 @@ precedence=(
 	('left', 'TkSiguienteCar','TkAnteriorCar'),
 	('right', 'TkValorAscii'),
 	('left', 'TkConcatenacion'),
-	('right', 'TkShift')
+	('right', 'TkShift'),
+	('right', 'TkCorcheteAbre'),
+	('left', 'TkCorcheteCierra')
 	)
 
 #Crea el arbol
@@ -328,6 +330,14 @@ def p_arrayaux(p):
 		p[0] = Node('rangoArreglo',[p[1],p[3]],p[2])
 	else:
 		p[0] = p[1]
+
+def p_ingresarEnArreglo(p):
+	'''ingresarEnArreglo : TkCorcheteAbre arrayaux TkCorcheteCierra ingresarEnArreglo
+						 | TkCorcheteAbre arrayaux TkCorcheteCierra'''
+	if len(p)>4:
+		p[0] = Node('secuencia-accederEnArreglo',[p[2],p[4]],None)
+	else:
+		p[0] = p[2]
 	
 def p_cond(p):
 	'''cond : if
@@ -347,8 +357,8 @@ def p_cond(p):
 			| TkWith TkBegin TkEnd 
 			| TkId TkAsignacion exp TkPuntoComa
 			| TkId TkAsignacion exp TkPuntoComa cond
-			| TkId TkCorcheteAbre arrayaux TkCorcheteCierra TkAsignacion exp TkPuntoComa
-			| TkId TkCorcheteAbre arrayaux TkCorcheteCierra TkAsignacion exp TkPuntoComa cond'''	
+			| TkId ingresarEnArreglo TkAsignacion exp TkPuntoComa
+			| TkId ingresarEnArreglo TkAsignacion exp TkPuntoComa cond'''	
 	if p[1]=="with":
 		if p[2] == "begin":
 			if p[3] == "end":
@@ -368,11 +378,11 @@ def p_cond(p):
 				p[0] = Node('secuencia',[Nodo,p[5]],None)
 			else:
 				p[0] = Nodo
-		else:
-			NodoInterno = Node('accederEnArreglo',[p[1],p[3]],p[2])
-			Nodo = Node('asignacion',[NodoInterno,p[6]],p[5])
+		elif p[5]==";":
+			NodoInterno = Node('accederEnArreglo',[p[1],p[2]],"[")
+			Nodo = Node('asignacion',[NodoInterno,p[4]],p[3])
 			if len(p)>8:
-				p[0] = Node('secuencia',[Nodo,p[8]],None)
+				p[0] = Node('secuencia',[Nodo,p[6]],None)
 			else:
 				p[0] = Nodo
 	else:
@@ -433,7 +443,7 @@ def p_operacion(p):
 				  | operacion TkMayorIgual operacion
 				  | operacion TkConcatenacion operacion
 				  | TkShift operacion
-				  | operacion TkCorcheteAbre arrayaux TkCorcheteCierra
+				  | operacion ingresarEnArreglo
 				  | operacion TkSiguienteCar
 				  | operacion TkAnteriorCar
 				  | TkValorAscii operacion
@@ -475,8 +485,6 @@ def p_operacion(p):
 			p[0] = Node('operacion-mayorIgual',[p[1],p[3]],p[2])
 		elif p[2]=="::":
 			p[0] = Node('concatenacion',[p[1],p[3]],p[2])
-		else:
-			p[0] = Node('accederEnArreglo',[p[1],p[3]],p[2])
 	elif len(p)==3:
 		if p[1]=="-":
 			p[0] = Node('operacion-menosUnario',[p[2]],p[1])
@@ -488,8 +496,10 @@ def p_operacion(p):
 			p[0] = Node('anteriorChar',[p[1]],p[2])
 		elif p[1]=="\#":
 			p[0] = Node('valorAscii',[p[2]],p[1])
-		else:
+		elif p[1]=="$":
 			p[0] = Node('shift',[p[2]],p[1])
+		else:
+			p[0] = Node('accederEnArreglo',[p[1],p[2]],"[")
 	else:
 		p[0] = p[1]
 
