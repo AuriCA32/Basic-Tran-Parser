@@ -711,7 +711,7 @@ def print_tree(node,n):
 			if cond in ["if","while","if_otherwise"]:
 				sting+="guardia: "+s
 				if cond=="if":
-					estado="exito"
+					estado="exito1"
 				elif cond=="if_otherwise":
 					estado="exito"
 				cond=""
@@ -733,15 +733,18 @@ def print_tree(node,n):
 			elif "Array" in s:
 				sting+="DECLARACION DE ARREGLO"
 				anterior="array"
+			elif "Id" in s:
+				sting+="DECLARACION DE ID"
+				anterior="var"
 			else:
 				sting+="DECLARACIONES"
 				anterior="var"
-				#n-=1
+				n-=1
 		elif node.type=="asignacion":
 			sting+="ASIGNACION"
 			anterior="asig"
 		elif node.type=="comienzo" or node.type=="beginInterno":
-			sting+="SECUENCIACION"
+			sting+="SECUENCIACION\n"
 		elif node.type=="condicional":
 			sting+="CONDICIONAL"
 			cond="if"
@@ -789,6 +792,9 @@ def print_tree(node,n):
 		if anterior!="izq" and anterior!="der" and estado=="exito":
 			sting+="\n"+("\t"*n)+"EXITO"
 			estado="fracaso"
+		if anterior!="izq" and anterior!="der" and estado=="exito1":
+			sting+="\n"+("\t"*n)+"EXITO"
+			estado=""
 		elif anterior!="izq" and anterior!="der" and estado=="fracaso":
 			sting+="\n"+("\t"*n)+"FRACASO"
 			estado=""
@@ -896,7 +902,7 @@ def print_tree(node,n):
 				sting+=("\t"*n)+"identificador: "+node
 				#anterior=""
 			elif anterior=="izq":
-				if cond=="concatenacion":
+				if cond=="concatenacion" or cond=="shift":
 					sting+="operador izquierdo: VARIABLE\n"
 					sting+=("\t"*n)+"arreglo: "+str(node)
 					anterior="der"
@@ -906,7 +912,7 @@ def print_tree(node,n):
 					anterior="der"
 					cond=""
 			elif anterior=="der":
-				if cond=="concatenacion":
+				if cond=="concatenacion" or cond=="shift":
 					sting+="operador derecho: VARIABLE\n"
 					sting+=("\t"*n)+"arreglo: "+str(node)
 					anterior=""
