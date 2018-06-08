@@ -137,3 +137,26 @@ begin
     end
 end
 //END//
+
+
+//CASO// 14
+begin
+	a <- a::b::x::c;
+end
+//END//
+
+//CASO// 15
+begin
+    a <- $$$a;
+    a <- a++++++--;
+    a <- a-b;
+end
+//END//
+
+//CASO// 16
+begin
+    for i from 1 to (n-1) ->
+        a <- $a;
+    end
+end
+//END//

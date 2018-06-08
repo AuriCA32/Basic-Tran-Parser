@@ -404,8 +404,8 @@ def p_while(p):
 	p[0] = Node('while',[p[2],p[4]],p[1])
 
 def p_for(p):
-	'''for : TkFor TkId TkFrom TkNum TkTo TkNum TkStep TkNum TkHacer cond TkEnd
-		   | TkFor TkId TkFrom TkNum TkTo TkNum TkHacer cond TkEnd'''
+	'''for : TkFor TkId TkFrom exp TkTo exp TkStep TkNum TkHacer cond TkEnd
+		   | TkFor TkId TkFrom exp TkTo exp TkHacer cond TkEnd'''
 	if len(p)>10:
 		p[0] = Node('for_step',[p[2],p[4],p[6],p[8],p[10]],p[1])
 	else:
@@ -432,6 +432,7 @@ def p_operacion(p):
 				  | operacion TkMod operacion
 				  | TkId TkPunto TkNum
 				  | TkMenos operacion
+				  | operacion TkMenos operacion
 				  | operacion TkConjuncion operacion
 				  | operacion TkDisyuncion operacion
 				  | operacion TkIgual operacion
@@ -502,139 +503,6 @@ def p_operacion(p):
 			p[0] = Node('accederEnArreglo',[p[1],p[2]],"[")
 	else:
 		p[0] = p[1]
-
-# def p_aritmetica(p):
-# 	#OJO revisar lo del punto porque no entiendo########
-# 	'''aritmetica : TkId TkPunto TkNum
-# 				  | TkNum
-# 				  | TkParAbre aritmetica TkParCierra
-# 				  | aritmetica TkSuma aritmetica
-# 				  | TkId TkSuma TkId
-# 				  | aritmetica TkSuma TkId
-# 				  | TkId TkSuma aritmetica
-# 				  | aritmetica TkResta aritmetica
-# 				  | TkId TkResta TkId
-# 				  | aritmetica TkResta TkId
-# 				  | TkId TkResta aritmetica
-# 				  | aritmetica TkMult aritmetica
-# 				  | TkId TkMult TkId
-# 				  | aritmetica TkMult TkId
-# 				  | TkId TkMult aritmetica
-# 				  | aritmetica TkDiv aritmetica
-# 				  | TkId TkDiv TkId
-# 				  | aritmetica TkDiv TkId
-# 				  | TkId TkDiv aritmetica
-# 				  | aritmetica TkMod aritmetica
-# 				  | TkId TkMod TkId
-# 				  | aritmetica TkMod TkId
-# 				  | TkId TkMod aritmetica
-# 				  | TkMenos aritmetica
-# 				  | TkMenos TkId''' #menos unario
-# 	if len(p)==4:
-# 		if p[1]=="(" and p[3]==")":
-# 			p[0] = p[2]
-# 		elif p[2]=="+":
-# 			p[0] = Node('suma',[p[1],p[3]],p[2])
-# 		elif p[2]=="-":
-# 			p[0] = Node('resta',[p[1],p[3]],p[2])
-# 		elif p[2]=="*":
-# 			p[0] = Node('multiplicacion',[p[1],p[3]],p[2])
-# 		elif p[2]=="/":
-# 			p[0] = Node('division',[p[1],p[3]],p[2])
-# 		elif p[2]=="%":
-# 			p[0] = Node('modulo',[p[1],p[3]],p[2])
-# 		else:
-# 			p[0] = Node('punto',[p[1],p[3]],p[2])
-# 	elif len(p)==3:
-# 		p[0] = Node('menosUnario',[p[2]],p[1])
-# 	else:
-# 		p[0] = p[1]
-
-# def p_booleana(p):
-# 	'''booleana : TkTrue
-# 				| TkFalse
-# 				| TkParAbre booleana TkParCierra
-# 				| booleana TkConjuncion booleana
-# 				| TkId TkConjuncion booleana
-# 				| booleana TkConjuncion TkId
-# 				| TkId TkConjuncion TkId
-# 				| booleana TkDisyuncion booleana
-# 				| TkId TkDisyuncion booleana
-# 				| booleana TkDisyuncion TkId
-# 				| TkId TkDisyuncion TkId
-# 				| booleana TkIgual booleana
-# 				| TkId TkIgual booleana
-# 				| booleana TkIgual TkId
-# 				| TkId TkIgual TkId
-# 				| booleana TkDiferente booleana
-# 				| TkId TkDiferente booleana
-# 				| booleana TkDiferente TkId
-# 				| TkId TkDiferente TkId
-# 				| TkNegacion booleana
-# 				| TkNegacion TkId'''
-# 	if len(p)==4:
-# 		if p[1]=="(" and p[3]==")":
-# 			p[0] = p[2]
-# 		elif p[2]=="/\\":
-# 			p[0] = Node('conjuncion',[p[1],p[3]],p[2])
-# 		elif p[2]=="\\/":
-# 			p[0] = Node('disyuncion',[p[1],p[3]],p[2])
-# 		elif p[2]=="=":
-# 			p[0] = Node('igual',[p[1],p[3]],p[2])
-# 		elif p[2]=="/=":
-# 			p[0] = Node('diferente',[p[1],p[3]],p[2])
-# 	elif len(p)==3:
-# 		p[0] = Node('negacion',[p[2]],p[1])
-# 	else:
-# 		p[0] = p[1]
-
-# def p_array(p):
-# 	'''array : array TkCorcheteAbre TkNum TkCorcheteCierra
-# 			 | TkParAbre array TkParCierra'''
-# 	if len(p)>3:
-# 		if p[1]=="(" and p[3]==")":
-# 			p[0] = p[2]
-# 		# elif p[2]=="::":
-# 		# 	p[0] = Node('concatenacion',[p[1],p[3]],p[2])
-# 		else:
-# 			p[0] = Node('accederEnArreglo',[p[1],p[3]],p[2])
-# 	elif len(p)==3:
-# 		p[0] = Node('shift',[p[2]],p[1])
-
-# def p_char(p):
-# 	'''char : TkCaracter TkSiguienteCar
-# 			| TkCaracter TkAnteriorCar
-# 			| TkValorAscii TkCaracter'''
-# 	if p[2]=="++":
-# 		p[0] = Node('siguienteChar',[p[1]],p[2])
-# 	if p[2]=="--":
-# 		p[0] = Node('anteriorChar',[p[1]],p[2])
-# 	else:
-# 		p[0] = Node('valorAscii',[p[2]],p[1])
-
-# def p_relacionales(p):
-# 	'''relacionales : booleana
-# 					| aritmetica TkMenor aritmetica
-# 					| aritmetica TkMenorIgual aritmetica
-# 					| aritmetica TkMayor aritmetica
-# 					| aritmetica TkMayorIgual aritmetica
-# 					| aritmetica TkIgual aritmetica
-# 					| aritmetica TkDiferente aritmetica'''
-# 	if len(p)==2:
-# 		p[0] = p[1]
-# 	else:
-# 		if p[2]=="<":
-# 			p[0] = Node('menor',[p[1],p[3]],p[2])
-# 		elif p[2]=="<=":
-# 			p[0] = Node('menorIgual',[p[1],p[3]],p[2])
-# 		elif p[2]==">":
-# 			p[0] = Node('mayor',[p[1],p[3]],p[2])
-# 		elif p[2]==">=":
-# 			p[0] = Node('mayorIgual',[p[1],p[3]],p[2])
-# 		elif p[2]=="=":
-# 			p[0] = Node('igual',[p[1],p[3]],p[2])
-# 		elif p[2]=="/=":
-# 			p[0] = Node('diferente',[p[1],p[3]],p[2])
 
 # Error rule for syntax errors
 def p_error(p):
