@@ -638,8 +638,10 @@ def p_operacion(p):
 
 # Error rule for syntax errors
 def p_error(p):
-	errores_sintacticos.append(p)
-	print("Syntax error in input")
+	if (not p):
+		return
+	errores_sintacticos.append("Error de sintaxis en la entrada.\nError: '" + str(p.value) +"' ubicado en la fila "+str(p.lineno)+", columna "+str(encontrar_col(data, p))+".")
+	#sys.exit()
 
 #Inicializacion del lexer
 data=read_given_file(sys.argv[1])
@@ -945,6 +947,8 @@ def print_tree(node,n):
 					anterior=""
 	return sting
 
+lexer.lineno=1
+
 yacc.yacc()
 y = yacc.parse(data)
 if print_tokens_or_errors()==0: ####Falta formato de errores
@@ -955,4 +959,3 @@ if print_tokens_or_errors()==0: ####Falta formato de errores
 		print(p)
 		print()
 		print(print_tree(y,0))
-	
