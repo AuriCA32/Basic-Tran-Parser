@@ -256,6 +256,7 @@ def p_declaracion_var(p):
 #declaracion de id variables
 def p_declaracion_id(p):
 	'''declaracionId : TkId TkComa declaracionId
+					 | TkId TkAsignacion exp TkComa declaracionId
 					 | declaracionIdNum
 					 | declaracionIdBool
 					 | declaracionIdChar'''
@@ -266,8 +267,7 @@ def p_declaracion_id(p):
 
 #declaracion de id tipo int
 def p_declaracion_idNum(p):
-	'''declaracionIdNum : TkId TkAsignacion TkNum TkComa declaracionIdNum
-						| TkId TkAsignacion TkNum TkDosPuntos TkInt
+	'''declaracionIdNum : TkId TkAsignacion exp TkDosPuntos TkInt
 						| TkId TkDosPuntos TkInt'''
 	if len(p)>4:
 		Nodo = Node('asignacion',[p[1],p[3]],p[2])
@@ -280,8 +280,7 @@ def p_declaracion_idNum(p):
 
 #declaracion de id tipo char
 def p_declaracion_idChar(p):
-	'''declaracionIdChar : TkId TkAsignacion TkCaracter TkComa declaracionIdChar
-						 | TkId TkAsignacion TkCaracter TkDosPuntos TkChar
+	'''declaracionIdChar : TkId TkAsignacion exp TkDosPuntos TkChar
 						 | TkId TkDosPuntos TkChar'''
 	if len(p)>4:
 		Nodo = Node('asignacion',[p[1],p[3]],p[2])
@@ -294,10 +293,7 @@ def p_declaracion_idChar(p):
 
 #declaracion de id tipo bool
 def p_declaracion_idBool(p):
-	'''declaracionIdBool : TkId TkAsignacion TkTrue TkComa declaracionIdBool
-						 | TkId TkAsignacion TkTrue TkDosPuntos TkBool
-						 | TkId TkAsignacion TkFalse TkComa declaracionIdBool
-						 | TkId TkAsignacion TkFalse TkDosPuntos TkBool
+	'''declaracionIdBool : TkId TkAsignacion exp TkDosPuntos TkBool
 						 | TkId TkDosPuntos TkBool'''
 	if len(p)>4:
 		Nodo = Node('asignacion',[p[1],p[3]],p[2])
@@ -311,11 +307,19 @@ def p_declaracion_idBool(p):
 #declaracion de arreglos
 def p_declaracion_array(p):
 	'''declaracionArray : TkId TkComa declaracionArray
-						| TkId TkDosPuntos TkArray TkCorcheteAbre TkNum TkCorcheteCierra TkOf type'''
+						| TkId TkDosPuntos TkArray TkCorcheteAbre exp TkCorcheteCierra type2'''
 	if len(p)>4:
-		p[0]=Node('declaracionArray',[p[1],p[5],p[8]],p[3])
+		p[0]=Node('declaracionArray',[p[1],p[5],p[7]],p[3])
 	else:
 		p[0]=Node('secuencia_declaracionArray',[p[1],p[3]],None)
+
+def p_type2(p):
+	'''type2 : TkOf TkArray TkCorcheteAbre exp TkCorcheteCierra  type2
+			 | TkOf type'''
+	if len(p)>3:
+		p[0] = Node('arrayInterno',[p[4],p[6]],p[1])
+	else:
+		p[0] = p[2]
 
 def p_type(p):
 	'''type : TkInt
@@ -355,11 +359,14 @@ def p_cond(p):
 			| TkWith declaracionVar TkBegin cond TkEnd cond
 			| TkWith TkBegin cond TkEnd 
 			| TkWith TkBegin TkEnd 
+			| TkBegin cond TkEnd 
 			| TkId TkAsignacion exp TkPuntoComa
 			| TkId TkAsignacion exp TkPuntoComa cond
 			| TkId ingresarEnArreglo TkAsignacion exp TkPuntoComa
 			| TkId ingresarEnArreglo TkAsignacion exp TkPuntoComa cond'''	
-	if p[1]=="with":
+	if p[1]=="begin":
+		p[0] = p[2]
+	elif p[1]=="with":
 		if p[2] == "begin":
 			if p[3] == "end":
 				p[0] = None
@@ -432,6 +439,7 @@ def p_operacion(p):
 				  | operacion TkMod operacion
 				  | TkId TkPunto TkNum
 				  | TkMenos operacion
+				  | TkResta operacion
 				  | operacion TkMenos operacion
 				  | operacion TkConjuncion operacion
 				  | operacion TkDisyuncion operacion
