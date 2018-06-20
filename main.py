@@ -218,6 +218,9 @@ class Node:
 		else:
 			self.children = [ ]
 		self.leaf = leaf
+		#print(str(self.leaf))
+		#print(str(self.type))
+		
 
 def p_program(p):
 	'''program : start'''
@@ -515,8 +518,9 @@ def p_operacion(p):
 # Error rule for syntax errors
 def p_error(p):
 	if (not p):
-		return
-	errores_sintacticos.append("Error de sintaxis en la entrada.\nError: '" + str(p.value) +"' ubicado en la fila "+str(p.lineno)+", columna "+str(encontrar_col(data, p))+".")
+		print("Fin de entrada inesperado.")
+	else:
+		errores_sintacticos.append("Error de sintaxis en la entrada.\nError: '" + str(p.value) +"' ubicado en la fila "+str(p.lineno)+", columna "+str(encontrar_col(data, p))+".")
 	#sys.exit()
 
 #Inicializacion del lexer
@@ -830,7 +834,7 @@ y = yacc.parse(data)
 if print_tokens_or_errors()==0: ####Falta formato de errores
 	p = buildtree(y)
 	if p=="":
-		print("()")
+		print("No se ha generado el árbol.")
 	else:
 		if len(sys.argv)>2 and sys.argv[2]=="-b":
 			print(p)
