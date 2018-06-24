@@ -361,33 +361,25 @@ def p_declaracion_var(p):
 #declaracion de id variables
 def p_declaracion_id(p):
 	'''declaracionId : TkId TkComa declaracionId
+					 | TkId TkAsignacion exp TkComa declaracionId
 					 | declaracionIdNum
 					 | declaracionIdBool
 					 | declaracionIdChar'''
 	global diccionario
 	if len(p)>2:
-		#dicc=len(lista_diccionarios)
-		#print("dicc "+str(dicc))
-		diccionario[str(p[1])]="id" ####Para la variable que tiene id, se puede poner var global para acomodarlo con el siguiente
-		#print(lista_diccionarios[dicc-1])
-		#diccionario=lista_diccionarios[dicc-1]
-		#diccionario[str(p[1])]="id"
+		diccionario[str(p[1])]="id" 
+
 		p[0]=Node('secuencia_declaracionId',[p[1],p[3]],None,p.lineno)
 	else:
 		p[0] = p[1]
 
 #declaracion de id tipo int
 def p_declaracion_idNum(p):
-	'''declaracionIdNum : TkId TkAsignacion TkNum TkComa declaracionIdNum
-						| TkId TkAsignacion TkNum TkDosPuntos TkInt
+	'''declaracionIdNum : TkId TkAsignacion exp TkDosPuntos TkInt
 						| TkId TkDosPuntos TkInt'''
 	global diccionario
-	#dicc=len(lista_diccionarios)
-	#print("dicc "+str(dicc))
 	diccionario[str(p[1])]="int"
-	#print(lista_diccionarios[dicc-1])
-	#diccionario=lista_diccionarios[dicc-1]
-	#diccionario[str(p[1])]="int"
+	
 	if len(p)>4:
 		Nodo = Node('asignacion',[p[1],p[3]],p[2],p.lineno)
 		if p[4]==",":
@@ -400,8 +392,7 @@ def p_declaracion_idNum(p):
 
 #declaracion de id tipo char
 def p_declaracion_idChar(p):
-	'''declaracionIdChar : TkId TkAsignacion TkCaracter TkComa declaracionIdChar
-						 | TkId TkAsignacion TkCaracter TkDosPuntos TkChar
+	'''declaracionIdChar : TkId TkAsignacion exp TkDosPuntos TkChar
 						 | TkId TkDosPuntos TkChar'''
 	global diccionario
 	#dicc=len(lista_diccionarios)
@@ -423,10 +414,7 @@ def p_declaracion_idChar(p):
 
 #declaracion de id tipo bool
 def p_declaracion_idBool(p):
-	'''declaracionIdBool : TkId TkAsignacion TkTrue TkComa declaracionIdBool
-						 | TkId TkAsignacion TkTrue TkDosPuntos TkBool
-						 | TkId TkAsignacion TkFalse TkComa declaracionIdBool
-						 | TkId TkAsignacion TkFalse TkDosPuntos TkBool
+	'''declaracionIdBool : TkId TkAsignacion exp TkDosPuntos TkBool
 						 | TkId TkDosPuntos TkBool'''
 	global diccionario
 	#dicc=len(lista_diccionarios)
@@ -450,17 +438,21 @@ def p_declaracion_array(p):
 	'''declaracionArray : TkId TkComa declaracionArray
 						| TkId TkDosPuntos TkArray TkCorcheteAbre TkNum TkCorcheteCierra TkOf type'''
 	global diccionario
-	#dicc=len(lista_diccionarios)
-	#print("dicc "+str(dicc))
 	diccionario[str(p[1])]="array"
-	#print(lista_diccionarios[dicc-1])
-	#diccionario=lista_diccionarios[dicc-1]
-	#diccionario[str(p[1])]="array"
+	
 	if len(p)>4:
 		p[0]=Node('declaracionArray',[p[1],p[5],p[8]],p[3],p.lineno)
 	else:
 		p[0]=Node('secuencia_declaracionArray',[p[1],p[3]],None,p.lineno)
 	
+
+def p_type2(p):
+	'''type2 : TkOf TkArray TkCorcheteAbre exp TkCorcheteCierra  type2
+			 | TkOf type'''
+	if len(p)>3:
+		p[0] = Node('arrayInterno',[p[4],p[6]],p[1])
+	else:
+		p[0] = p[2]
 
 def p_type(p):
 	'''type : TkInt
@@ -500,6 +492,7 @@ def p_cond(p):
 			| TkWith declaracionVar TkBegin cond TkEnd cond
 			| TkWith TkBegin cond TkEnd 
 			| TkWith TkBegin TkEnd 
+			| TkBegin cond TkEnd 
 			| TkId TkAsignacion exp TkPuntoComa
 			| TkId TkAsignacion exp TkPuntoComa cond
 			| TkId ingresarEnArreglo TkAsignacion exp TkPuntoComa
@@ -583,6 +576,7 @@ def p_operacion(p):
 				  | operacion TkMod operacion
 				  | TkId TkPunto TkNum
 				  | TkMenos operacion
+				  | TkResta operacion
 				  | operacion TkMenos operacion
 				  | operacion TkConjuncion operacion
 				  | operacion TkDisyuncion operacion
@@ -658,8 +652,9 @@ def p_operacion(p):
 # Error rule for syntax errors
 def p_error(p):
 	if (not p):
-		return
-	errores_sintacticos.append("Error de sintaxis en la entrada.\nError: '" + str(p.value) +"' ubicado en la fila "+str(p.lineno)+", columna "+str(encontrar_col(data, p))+".")
+		print("Fin de entrada inesperado.")
+	else:
+		errores_sintacticos.append("Error de sintaxis en la entrada.\nError: '" + str(p.value) +"' ubicado en la fila "+str(p.lineno)+", columna "+str(encontrar_col(data, p))+".")
 	#sys.exit()
 
 #Inicializacion del lexer
@@ -940,7 +935,7 @@ y = yacc.parse(data)
 if print_tokens_or_errors()==0: ####Falta formato de errores
 	p = buildtree(y)
 	if p=="":
-		print("()")
+		print("No se ha generado el árbol.")
 	else:
 		if len(sys.argv)>2 and sys.argv[2]=="-b":
 			print(p)
