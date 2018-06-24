@@ -1,0 +1,26 @@
+begin
+    with
+        var x <- 3 : char
+    begin
+        for i from 0 to x ->
+            print i;
+        end
+        for i from 0 to x step 2 ->
+            print i;
+        end
+        
+        if x ->
+            print 2;
+        end
+        
+        if x ->
+            print 1;
+        otherwise ->
+            print 0;
+        end
+        
+        while x > 0 ->
+            x <- x-1;
+        end
+    end
+end

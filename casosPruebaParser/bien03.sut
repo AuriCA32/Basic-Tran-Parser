@@ -1,0 +1,14 @@
+with 
+   var i<-0,j<-1 : int
+begin
+    while j <= 42 ->
+        print j;
+        j <- j + 1;
+        a<- a::b;
+    end
+    for i from 4+a*42 to -12 ->
+    	for i from 1 to 100 step 2 ->     
+            i<-i+1;
+        end
+    end
+end
