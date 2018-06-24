@@ -264,7 +264,7 @@ def p_declaracion_id(p):
 					 | declaracionIdBool
 					 | declaracionIdChar'''
 	if len(p)>2:
-		p[0]=Node('secuencia_declaracionId',[p[1],p[3]],None)
+		p[0]=Node('secuencia_declaracionId',[p[1],p[3],p[5]],None)
 	else:
 		p[0] = p[1]
 
