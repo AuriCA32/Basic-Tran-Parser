@@ -824,6 +824,7 @@ if print_tokens_or_errors()==0: ####Falta formato de errores
 	if p=="":
 		print("()")
 	else:
-		#print(p)
-		print()
-		print(print_tree(y,0))
+		if len(sys.argv)>2 and sys.argv[2]=="-b":
+			print(p)
+		else:
+			print(print_tree(y,0))
