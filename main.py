@@ -2,10 +2,12 @@ import ply.lex as lex
 import ply.yacc as yacc
 import sys
 import re
+from collections import OrderedDict
 
 #Listas de tokens y errores
 tokError=[] #Global, si esta vacio no hay errores
 errores_sintacticos=[]
+errores_contexto=[]
 tokensList=[]
 
 # Lista de nombres de palabras reservadas
@@ -209,15 +211,107 @@ precedence=(
 	('left', 'TkCorcheteCierra')
 	)
 
+declaracion=["secuencia_declaraciones",
+"secuencia_declaracionId",
+"secuencia_declaracionIdNum",
+"declaracionIdNum",
+"secuencia_declaracionIdChar",
+"declaracionIdChar",
+"secuencia_declaracionIdBool",
+"declaracionIdBool",
+"declaracionArray",
+"secuencia_declaracionArray"]
+
+operacion=["operacion-suma",
+"operacion-resta",
+"operacion-multiplicacion",
+"operacion-division",
+"operacion-modulo",
+"operacion-punto",
+"operacion-conjuncion",
+"operacion-disyuncion",
+"operacion-igual",
+"operacion-diferente",
+"operacion-menor",
+"operacion-menorIgual",
+"operacion-mayor",
+"operacion-mayorIgual",
+"operacion-menosUnario",
+"operacion-negacion"]
+
+arreglo=["concatenacion",
+"accederEnArreglo",
+"shift"]
+
+caracter=["siguienteChar",
+"anteriorChar",
+"valorAscii"]
+
 #Crea el arbol
 class Node:
-	def __init__(self,type,children=None,leaf=None):
+	def __init__(self,type,children=None,leaf=None,linea=None):
 		self.type = type
 		if children:
 			self.children = children
 		else:
 			self.children = [ ]
 		self.leaf = leaf
+		self.resultado=None
+		self.tipo_var=None
+		self.linea=linea ####VER SI ES NECESARIO PONERLO
+	
+	# def calc_resultado(self, Node, hijo1, hijo2):
+	# 	if isinstance(hijo1,Node):
+	# 		resultado1=hijo1.resultado
+	# 		tipo1=hijo1.tipo_var
+	# 	else:
+	# 		resultado1=hijo1
+	# 		tipo1=type(hijo1)
+			
+	# 	if isinstance(hijo2,Node):
+	# 		resultado1=hijo1.resultado
+	# 		tipo2=hijo2.tipo_var
+	# 	else:
+	# 		resultado1=hijo1
+	# 		tipo2=type(hijo2)
+		
+		#Si el tipo es un string se tiene que buscar en el diccionario de qué tipo es la variable
+
+		# if tipo1!=tipo2 and tipo1=str and tipo2!=str: #Si no son id
+		# 	#Agrega un error a una lista de errores
+		# 	errores_contexto.append("Error: operación entre diferentes tipos de variables\
+		# 							 en la linea "+Node.linea+".")
+		# 	return
+		# elif tipo1==str and tipo2==str:
+		# 	Node.tipo_var=tipo1
+		# elif tipo1!=str and tipo2==str:
+		# 	Node.tipo_var=tipo1
+		# elif tipo1==str and tipo2!=str:
+		# 	Node.tipo_var=tipo2
+
+		# if Node.type in operacion:
+		# 	if Node.tipo_var==int:
+		# 		if "suma" in Node.type:
+					
+		# 		else:
+		# 			errores_contexto.append("Error: tipo de variable inválida para operación\
+		# 							 en la linea "+Node.linea+".")	
+		# 	elif Node.tipo_var==bool:
+		# 		else:
+		# 			errores_contexto.append("Error: tipo de variable inválida para operación\
+		# 							 en la linea "+Node.linea+".")
+		# 	elif Node.tipo_var=="char":
+		# 		else:
+		# 			errores_contexto.append("Error: tipo de variable inválida para operación\
+		# 							 en la linea "+Node.linea+".")
+		# 	elif Node.tipo_var=="array":
+			
+		# 		else:
+		# 			errores_contexto.append("Error: tipo de variable inválida para operación\
+		# 							 en la linea "+Node.linea+".")
+
+lista_diccionarios=[]
+diccionario=OrderedDict()
 
 def p_program(p):
 	'''program : start'''
@@ -230,14 +324,25 @@ def p_start(p):
 			 | TkWith TkBegin TkEnd
 			 | TkWith TkBegin cond TkEnd
 			 | TkBegin TkEnd'''
+	global diccionario
 	if len(p)>4:
+
+		lista_diccionarios.append(diccionario)
+		diccionario=OrderedDict()
+
+		#print("largo: "+str(len(lista_diccionarios)))
 		if p[2] == "begin":
 			p[0] = p[3]
 		elif p[3] == "begin" and p[4]=="end":
-			p[0] = Node('comienzo',[p[2]],None)
+			p[0] = Node('comienzo',[p[2]],None,p.lineno)
 		else:
-			p[0] = Node('comienzo',[p[2],p[4]],None)
+			p[0] = Node('comienzo',[p[2],p[4]],None,p.lineno)
 	elif len(p)==4 and p[2] != "begin":
+		
+		lista_diccionarios.append(diccionario)
+		diccionario=OrderedDict()
+
+		#print("largo: "+str(len(lista_diccionarios)))
 		p[0] = p[2]
 	else:
 		p[0] = None
@@ -249,7 +354,7 @@ def p_declaracion_var(p):
 					  | TkVar declaracionId declaracionVar
 					  | TkVar declaracionArray declaracionVar'''
 	if len(p)>3:
-		p[0] = Node('secuencia_declaraciones',[p[2],p[3]],p[1]) 
+		p[0] = Node('secuencia_declaraciones',[p[2],p[3]],p[1],p.lineno)
 	else:
 		p[0] = p[2]
 
@@ -259,8 +364,15 @@ def p_declaracion_id(p):
 					 | declaracionIdNum
 					 | declaracionIdBool
 					 | declaracionIdChar'''
+	global diccionario
 	if len(p)>2:
-		p[0]=Node('secuencia_declaracionId',[p[1],p[3]],None)
+		#dicc=len(lista_diccionarios)
+		#print("dicc "+str(dicc))
+		diccionario[str(p[1])]="id" ####Para la variable que tiene id, se puede poner var global para acomodarlo con el siguiente
+		#print(lista_diccionarios[dicc-1])
+		#diccionario=lista_diccionarios[dicc-1]
+		#diccionario[str(p[1])]="id"
+		p[0]=Node('secuencia_declaracionId',[p[1],p[3]],None,p.lineno)
 	else:
 		p[0] = p[1]
 
@@ -269,28 +381,45 @@ def p_declaracion_idNum(p):
 	'''declaracionIdNum : TkId TkAsignacion TkNum TkComa declaracionIdNum
 						| TkId TkAsignacion TkNum TkDosPuntos TkInt
 						| TkId TkDosPuntos TkInt'''
+	global diccionario
+	#dicc=len(lista_diccionarios)
+	#print("dicc "+str(dicc))
+	diccionario[str(p[1])]="int"
+	#print(lista_diccionarios[dicc-1])
+	#diccionario=lista_diccionarios[dicc-1]
+	#diccionario[str(p[1])]="int"
 	if len(p)>4:
-		Nodo = Node('asignacion',[p[1],p[3]],p[2])
+		Nodo = Node('asignacion',[p[1],p[3]],p[2],p.lineno)
 		if p[4]==",":
-			p[0]=Node('secuencia_declaracionIdNum',[Nodo,p[5]],None)   ######REVISAR
+			p[0]=Node('secuencia_declaracionIdNum',[Nodo,p[5]],None,p.lineno)   ######REVISAR
 		else:
-			p[0]=Node('declaracionIdNum',[Nodo,p[5]],p[4])
+			p[0]=Node('declaracionIdNum',[Nodo,p[5]],p[4],p.lineno)
 	else:
-		p[0]=Node('declaracionIdNum',[p[1],p[3]],p[2])
+		p[0]=Node('declaracionIdNum',[p[1],p[3]],p[2],p.lineno)
+	
 
 #declaracion de id tipo char
 def p_declaracion_idChar(p):
 	'''declaracionIdChar : TkId TkAsignacion TkCaracter TkComa declaracionIdChar
 						 | TkId TkAsignacion TkCaracter TkDosPuntos TkChar
 						 | TkId TkDosPuntos TkChar'''
+	global diccionario
+	#dicc=len(lista_diccionarios)
+	#print("dicc "+str(dicc))
+	diccionario[str(p[1])]="char"
+	#print(lista_diccionarios[dicc-1])
+	#diccionario=lista_diccionarios[dicc-1]
+	#diccionario[str(p[1])]="char"
 	if len(p)>4:
-		Nodo = Node('asignacion',[p[1],p[3]],p[2])
+		Nodo = Node('asignacion',[p[1],p[3]],p[2],p.lineno)
 		if p[4]==",":
-			p[0]=Node('secuencia_declaracionIdChar',[Nodo,p[5]],None)   ######REVISAR
+			p[0]=Node('secuencia_declaracionIdChar',[Nodo,p[5]],None,p.lineno)   ######REVISAR
 		else:
-			p[0]=Node('declaracionIdChar',[Nodo,p[5]],p[4])
+			p[0]=Node('declaracionIdChar',[Nodo,p[5]],p[4],p.lineno)
+	
 	else:
-		p[0]=Node('declaracionIdChar',[p[1],p[3]],p[2])
+		p[0]=Node('declaracionIdChar',[p[1],p[3]],p[2],p.lineno)
+	
 
 #declaracion de id tipo bool
 def p_declaracion_idBool(p):
@@ -299,23 +428,39 @@ def p_declaracion_idBool(p):
 						 | TkId TkAsignacion TkFalse TkComa declaracionIdBool
 						 | TkId TkAsignacion TkFalse TkDosPuntos TkBool
 						 | TkId TkDosPuntos TkBool'''
+	global diccionario
+	#dicc=len(lista_diccionarios)
+	#print("dicc "+str(dicc))
+	diccionario[str(p[1])]="bool"
+	#print(lista_diccionarios[dicc-1])
+	#diccionario=lista_diccionarios[dicc-1]
+	#diccionario[str(p[1])]="bool"
 	if len(p)>4:
-		Nodo = Node('asignacion',[p[1],p[3]],p[2])
+		Nodo = Node('asignacion',[p[1],p[3]],p[2],p.lineno)
 		if p[4]==",":
-			p[0]=Node('secuencia_declaracionIdBool',[Nodo,p[5]],None)   ######REVISAR
+			p[0]=Node('secuencia_declaracionIdBool',[Nodo,p[5]],None,p.lineno)   ######REVISAR
 		else:
-			p[0]=Node('declaracionIdBool',[Nodo,p[5]],p[4])
+			p[0]=Node('declaracionIdBool',[Nodo,p[5]],p[4],p.lineno)
 	else:
-		p[0]=Node('declaracionIdBool',[p[1],p[3]],p[2])
+		p[0]=Node('declaracionIdBool',[p[1],p[3]],p[2],p.lineno)
+	
 
 #declaracion de arreglos
 def p_declaracion_array(p):
 	'''declaracionArray : TkId TkComa declaracionArray
 						| TkId TkDosPuntos TkArray TkCorcheteAbre TkNum TkCorcheteCierra TkOf type'''
+	global diccionario
+	#dicc=len(lista_diccionarios)
+	#print("dicc "+str(dicc))
+	diccionario[str(p[1])]="array"
+	#print(lista_diccionarios[dicc-1])
+	#diccionario=lista_diccionarios[dicc-1]
+	#diccionario[str(p[1])]="array"
 	if len(p)>4:
-		p[0]=Node('declaracionArray',[p[1],p[5],p[8]],p[3])
+		p[0]=Node('declaracionArray',[p[1],p[5],p[8]],p[3],p.lineno)
 	else:
-		p[0]=Node('secuencia_declaracionArray',[p[1],p[3]],None)
+		p[0]=Node('secuencia_declaracionArray',[p[1],p[3]],None,p.lineno)
+	
 
 def p_type(p):
 	'''type : TkInt
@@ -327,7 +472,7 @@ def p_arrayaux(p):
 	'''arrayaux : TkNum
 				| TkNum TkComa TkNum'''
 	if len(p)>2:
-		p[0] = Node('rangoArreglo',[p[1],p[3]],p[2])
+		p[0] = Node('rangoArreglo',[p[1],p[3]],p[2],p.lineno)
 	else:
 		p[0] = p[1]
 
@@ -335,7 +480,7 @@ def p_ingresarEnArreglo(p):
 	'''ingresarEnArreglo : TkCorcheteAbre arrayaux TkCorcheteCierra ingresarEnArreglo
 						 | TkCorcheteAbre arrayaux TkCorcheteCierra'''
 	if len(p)>4:
-		p[0] = Node('secuencia-accederEnArreglo',[p[2],p[4]],None)
+		p[0] = Node('secuencia-accederEnArreglo',[p[2],p[4]],None,p.lineno)
 	else:
 		p[0] = p[2]
 	
@@ -358,36 +503,42 @@ def p_cond(p):
 			| TkId TkAsignacion exp TkPuntoComa
 			| TkId TkAsignacion exp TkPuntoComa cond
 			| TkId ingresarEnArreglo TkAsignacion exp TkPuntoComa
-			| TkId ingresarEnArreglo TkAsignacion exp TkPuntoComa cond'''	
+			| TkId ingresarEnArreglo TkAsignacion exp TkPuntoComa cond'''
+	global diccionario
 	if p[1]=="with":
+		#Se crea un nuevo diccionario
+		
+		lista_diccionarios.append(diccionario)
+		diccionario=OrderedDict()
+
 		if p[2] == "begin":
 			if p[3] == "end":
 				p[0] = None
 			else:
 				p[0] = p[3]
 		else:
-			Nodo = Node('beginInterno',[p[2],p[4]],p[3])
+			Nodo = Node('beginInterno',[p[2],p[4]],p[3],p.lineno)
 			if len(p)>6:
-				p[0] = Node('secuencia',[Nodo,p[6]],None)
+				p[0] = Node('secuencia',[Nodo,p[6]],None,p.lineno)
 			else:
 				p[0] = Nodo
 	elif len(p)>4 and p[1]!="with":
 		if p[4]==";":
-			Nodo = Node('asignacion',[p[1],p[3]],p[2])
+			Nodo = Node('asignacion',[p[1],p[3]],p[2],p.lineno)
 			if len(p)>5:
-				p[0] = Node('secuencia',[Nodo,p[5]],None)
+				p[0] = Node('secuencia',[Nodo,p[5]],None,p.lineno)
 			else:
 				p[0] = Nodo
 		elif p[5]==";":
-			NodoInterno = Node('accederEnArreglo',[p[1],p[2]],"[")
-			Nodo = Node('asignacion',[NodoInterno,p[4]],p[3])
+			NodoInterno = Node('accederEnArreglo',[p[1],p[2]],"[",p.lineno)
+			Nodo = Node('asignacion',[NodoInterno,p[4]],p[3],p.lineno)
 			if len(p)>8:
-				p[0] = Node('secuencia',[Nodo,p[6]],None)
+				p[0] = Node('secuencia',[Nodo,p[6]],None,p.lineno)
 			else:
 				p[0] = Nodo
 	else:
 		if len(p)>2:
-			p[0] = Node('secuencia',[p[1],p[2]],None)
+			p[0] = Node('secuencia',[p[1],p[2]],None,p.lineno)
 		else:
 			p[0] = p[1]
 
@@ -395,29 +546,29 @@ def p_if(p):
 	'''if : TkIf operacion TkHacer cond TkOtherwise TkHacer cond TkEnd
 		  | TkIf operacion TkHacer cond TkEnd'''
 	if len(p)>6:
-		p[0] = Node('condicional_otherwise',[p[2],p[4],p[7]],p[1])
+		p[0] = Node('condicional_otherwise',[p[2],p[4],p[7]],p[1],p.lineno)
 	else:
-		p[0] = Node('condicional',[p[2],p[4]],p[1])
+		p[0] = Node('condicional',[p[2],p[4]],p[1],p.lineno)
 
 def p_while(p):
 	'''while : TkWhile operacion TkHacer cond TkEnd'''
-	p[0] = Node('while',[p[2],p[4]],p[1])
+	p[0] = Node('while',[p[2],p[4]],p[1],p.lineno)
 
 def p_for(p):
 	'''for : TkFor TkId TkFrom exp TkTo exp TkStep TkNum TkHacer cond TkEnd
 		   | TkFor TkId TkFrom exp TkTo exp TkHacer cond TkEnd'''
 	if len(p)>10:
-		p[0] = Node('for_step',[p[2],p[4],p[6],p[8],p[10]],p[1])
+		p[0] = Node('for_step',[p[2],p[4],p[6],p[8],p[10]],p[1],p.lineno)
 	else:
-		p[0] = Node('for',[p[2],p[4],p[6],p[8]],p[1])
+		p[0] = Node('for',[p[2],p[4],p[6],p[8]],p[1],p.lineno)
 
 def p_read(p):
 	'''read : TkRead TkId TkPuntoComa'''
-	p[0] = Node('read',[p[2]],p[1])
+	p[0] = Node('read',[p[2]],p[1],p.lineno)
 
 def p_print(p):
 	'''print : TkPrint exp TkPuntoComa'''
-	p[0] = Node('print',[p[2]],p[1])
+	p[0] = Node('print',[p[2]],p[1],p.lineno)
 
 def p_exp(p):
 	'''exp : operacion'''
@@ -457,50 +608,50 @@ def p_operacion(p):
 		if p[1]=="(" and p[3]==")":
 			p[0] = p[2]
 		elif p[2]=="+":
-			p[0] = Node('operacion-suma',[p[1],p[3]],p[2])
+			p[0] = Node('operacion-suma',[p[1],p[3]],p[2],p.lineno)
 		elif p[2]=="-":
-			p[0] = Node('operacion-resta',[p[1],p[3]],p[2])
+			p[0] = Node('operacion-resta',[p[1],p[3]],p[2],p.lineno)
 		elif p[2]=="*":
-			p[0] = Node('operacion-multiplicacion',[p[1],p[3]],p[2])
+			p[0] = Node('operacion-multiplicacion',[p[1],p[3]],p[2],p.lineno)
 		elif p[2]=="/":
-			p[0] = Node('operacion-division',[p[1],p[3]],p[2])
+			p[0] = Node('operacion-division',[p[1],p[3]],p[2],p.lineno)
 		elif p[2]=="%":
-			p[0] = Node('operacion-modulo',[p[1],p[3]],p[2])
+			p[0] = Node('operacion-modulo',[p[1],p[3]],p[2],p.lineno)
 		elif p[2]==".":
-			p[0] = Node('operacion-punto',[p[1],p[3]],p[2])
+			p[0] = Node('operacion-punto',[p[1],p[3]],p[2],p.lineno)
 		elif p[2]=="/\\":
-			p[0] = Node('operacion-conjuncion',[p[1],p[3]],p[2])
+			p[0] = Node('operacion-conjuncion',[p[1],p[3]],p[2],p.lineno)
 		elif p[2]=="\\/":
-			p[0] = Node('operacion-disyuncion',[p[1],p[3]],p[2])
+			p[0] = Node('operacion-disyuncion',[p[1],p[3]],p[2],p.lineno)
 		elif p[2]=="=":
-			p[0] = Node('operacion-igual',[p[1],p[3]],p[2])
+			p[0] = Node('operacion-igual',[p[1],p[3]],p[2],p.lineno)
 		elif p[2]=="/=":
-			p[0] = Node('operacion-diferente',[p[1],p[3]],p[2])
+			p[0] = Node('operacion-diferente',[p[1],p[3]],p[2],p.lineno)
 		elif p[2]=="<":
-			p[0] = Node('operacion-menor',[p[1],p[3]],p[2])
+			p[0] = Node('operacion-menor',[p[1],p[3]],p[2],p.lineno)
 		elif p[2]=="<=":
-			p[0] = Node('operacion-menorIgual',[p[1],p[3]],p[2])
+			p[0] = Node('operacion-menorIgual',[p[1],p[3]],p[2],p.lineno)
 		elif p[2]==">":
-			p[0] = Node('operacion-mayor',[p[1],p[3]],p[2])
+			p[0] = Node('operacion-mayor',[p[1],p[3]],p[2],p.lineno)
 		elif p[2]==">=":
-			p[0] = Node('operacion-mayorIgual',[p[1],p[3]],p[2])
+			p[0] = Node('operacion-mayorIgual',[p[1],p[3]],p[2],p.lineno)
 		elif p[2]=="::":
-			p[0] = Node('concatenacion',[p[1],p[3]],p[2])
+			p[0] = Node('concatenacion',[p[1],p[3]],p[2],p.lineno)
 	elif len(p)==3:
 		if p[1]=="-":
-			p[0] = Node('operacion-menosUnario',[p[2]],p[1])
+			p[0] = Node('operacion-menosUnario',[p[2]],p[1],p.lineno)
 		if p[1]=="not":
-			p[0] = Node('operacion-negacion',[p[2]],p[1])
+			p[0] = Node('operacion-negacion',[p[2]],p[1],p.lineno)
 		elif p[2]=="++":
-			p[0] = Node('siguienteChar',[p[1]],p[2])
+			p[0] = Node('siguienteChar',[p[1]],p[2],p.lineno)
 		elif p[2]=="--":
-			p[0] = Node('anteriorChar',[p[1]],p[2])
+			p[0] = Node('anteriorChar',[p[1]],p[2],p.lineno)
 		elif p[1]=="\#":
-			p[0] = Node('valorAscii',[p[2]],p[1])
+			p[0] = Node('valorAscii',[p[2]],p[1],p.lineno)
 		elif p[1]=="$":
-			p[0] = Node('shift',[p[2]],p[1])
+			p[0] = Node('shift',[p[2]],p[1],p.lineno)
 		else:
-			p[0] = Node('accederEnArreglo',[p[1],p[2]],"[")
+			p[0] = Node('accederEnArreglo',[p[1],p[2]],"[",p.lineno)
 	else:
 		p[0] = p[1]
 
@@ -541,42 +692,6 @@ def buildtree(node):
 		else:
 			sting+=node
 	return sting
-
-declaracion=["secuencia_declaraciones",
-"secuencia_declaracionId",
-"secuencia_declaracionIdNum",
-"declaracionIdNum",
-"secuencia_declaracionIdChar",
-"declaracionIdChar",
-"secuencia_declaracionIdBool",
-"declaracionIdBool",
-"declaracionArray",
-"secuencia_declaracionArray"]
-
-operacion=["operacion-suma",
-"operacion-resta",
-"operacion-multiplicacion",
-"operacion-division",
-"operacion-modulo",
-"operacion-punto",
-"operacion-conjuncion",
-"operacion-disyuncion",
-"operacion-igual",
-"operacion-diferente",
-"operacion-menor",
-"operacion-menorIgual",
-"operacion-mayor",
-"operacion-mayorIgual",
-"operacion-menosUnario",
-"operacion-negacion"]
-
-arreglo=["concatenacion",
-"accederEnArreglo",
-"shift"]
-
-caracter=["siguienteChar",
-"anteriorChar",
-"valorAscii"]
 
 anterior=""
 cond=""
@@ -830,5 +945,14 @@ if print_tokens_or_errors()==0: ####Falta formato de errores
 		if len(sys.argv)>2 and sys.argv[2]=="-b":
 			print(p)
 		else:
-			print(p)
+			#print(p)
+			for diccionario in lista_diccionarios:
+				lista=list(diccionario.keys())
+				for i in range(len(lista)):
+					key=lista[i]
+					if diccionario[key]=="id":
+						prev=lista[i-1]
+						diccionario[key]=diccionario[prev]
+						pass
+				print(diccionario)
 			#print(print_tree(y,0))
