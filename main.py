@@ -526,12 +526,15 @@ def buildtree(node):
 	if node==None:
 		return sting
 	if isinstance(node,Node):
-		sting+="("+node.type
+		sting+="( tipo: "+node.type
 		if node.leaf!=None:
-			sting+=","+node.leaf
+			sting+=", hoja: "+node.leaf
+		i=0
 		for child in node.children:
-			sting+=","+buildtree(child)
-		sting+=")"
+			sting+=", hijo "+str(i)+" "+buildtree(child)+""
+			i=i+1
+		sting+=")\n"
+		
 	else:
 		if isinstance(node,int):
 			sting+=str(node)
@@ -827,4 +830,5 @@ if print_tokens_or_errors()==0: ####Falta formato de errores
 		if len(sys.argv)>2 and sys.argv[2]=="-b":
 			print(p)
 		else:
-			print(print_tree(y,0))
+			print(p)
+			#print(print_tree(y,0))
