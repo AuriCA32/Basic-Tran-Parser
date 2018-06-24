@@ -1,0 +1,632 @@
+
+
+//Inicio Caso de Prueba 1//
+
+Input:
+with
+    var a <- true,b <- false,c : bool
+    var x, y : int
+    var z <- 'z' : char
+    var m : array [3] of int
+begin
+    if a>b ->
+        a <- b + c;
+    otherwise ->
+        a <- c;
+    end
+end
+
+***Resultado:
+
+SECUENCIACION
+
+	DECLARACIONES
+	DECLARACION DE BOOLEANO
+		ASIGNACION
+			identificador: a
+			valor: true
+		DECLARACION DE BOOLEANO
+			ASIGNACION
+				identificador: b
+				valor: false
+			DECLARACIONES
+			contenedor: VARIABLE
+			identificador: c
+			expresion: BOOLEANO
+	DECLARACIONES
+	DECLARACION DE ID
+		contenedor: VARIABLE
+		identificador: x
+		DECLARACIONES
+		contenedor: VARIABLE
+		identificador: y
+		expresion: LITERAL ENTERO
+	DECLARACIONES
+	DECLARACIONES
+	ASIGNACION
+		identificador: z
+		valor: 'z'
+		expresion: CARACTER
+	DECLARACIONES
+	contenedor: VARIABLE
+	identificador: m
+	ARREGLO de tamaño: 3
+	expresion: LITERAL ENTERO
+	CONDICIONAL
+		guardia: mayor
+			operador izquierdo: VARIABLE
+			valor: a
+			operador derecho: VARIABLE
+			valor: b
+		ASIGNACION
+		EXITO
+			identificador: a
+			operacion: suma
+				operador izquierdo: VARIABLE
+				valor: b
+				operador derecho: VARIABLE
+				valor: c
+		ASIGNACION
+		FRACASO
+			identificador: a
+			valor: c
+
+
+
+
+//Inicio Caso de Prueba 2//
+
+Input:
+with
+    var a <- true,b <- false,c : bool
+    var x, y : int
+    var z <- 'z' : char
+    var m : array [3] of int
+begin
+    a<-a::b;
+    for i from 1 to 4 ->
+        a<-a;
+    end
+end
+
+***Resultado:
+
+SECUENCIACION
+
+	DECLARACIONES
+	DECLARACION DE BOOLEANO
+		ASIGNACION
+			identificador: a
+			valor: true
+		DECLARACION DE BOOLEANO
+			ASIGNACION
+				identificador: b
+				valor: false
+			DECLARACIONES
+			contenedor: VARIABLE
+			identificador: c
+			expresion: BOOLEANO
+	DECLARACIONES
+	DECLARACION DE ID
+		contenedor: VARIABLE
+		identificador: x
+		DECLARACIONES
+		contenedor: VARIABLE
+		identificador: y
+		expresion: LITERAL ENTERO
+	DECLARACIONES
+	DECLARACIONES
+	ASIGNACION
+		identificador: z
+		valor: 'z'
+		expresion: CARACTER
+	DECLARACIONES
+	contenedor: VARIABLE
+	identificador: m
+	ARREGLO de tamaño: 3
+	expresion: LITERAL ENTERO
+	SECUENCIA
+	ASIGNACION
+		identificador: a
+		operacion: concatenacion
+			operador izquierdo: VARIABLE
+			arreglo: a
+			operador derecho: VARIABLE
+			arreglo: b
+	ITERACION DETERMINADA
+		
+		valor inferior: 1
+		valor superior: 4
+		ASIGNACION
+			identificador: a
+			valor: a
+
+
+
+
+//Inicio Caso de Prueba 3//
+
+Input:
+begin
+end
+
+***Resultado:
+()
+
+
+
+
+//Inicio Caso de Prueba 4//
+
+Input:
+with
+    var a <- true,b <- false,c : bool
+    var x, y : int
+    var z <- 'z' : char
+    var m : array [3] of int
+begin
+    a<-a::$b;
+    for i from 1 to 4 ->
+        a<-a;
+    end
+end
+
+***Resultado:
+
+SECUENCIACION
+
+	DECLARACIONES
+	DECLARACION DE BOOLEANO
+		ASIGNACION
+			identificador: a
+			valor: true
+		DECLARACION DE BOOLEANO
+			ASIGNACION
+				identificador: b
+				valor: false
+			DECLARACIONES
+			contenedor: VARIABLE
+			identificador: c
+			expresion: BOOLEANO
+	DECLARACIONES
+	DECLARACION DE ID
+		contenedor: VARIABLE
+		identificador: x
+		DECLARACIONES
+		contenedor: VARIABLE
+		identificador: y
+		expresion: LITERAL ENTERO
+	DECLARACIONES
+	DECLARACIONES
+	ASIGNACION
+		identificador: z
+		valor: 'z'
+		expresion: CARACTER
+	DECLARACIONES
+	contenedor: VARIABLE
+	identificador: m
+	ARREGLO de tamaño: 3
+	expresion: LITERAL ENTERO
+	SECUENCIA
+	ASIGNACION
+		identificador: a
+		operacion: concatenacion
+			operador izquierdo: VARIABLE
+			arreglo: a
+			operacion: shift
+				operador derecho: VARIABLE
+				arreglo: b
+	ITERACION DETERMINADA
+		
+		valor inferior: 1
+		valor superior: 4
+		ASIGNACION
+			identificador: a
+			valor: a
+
+
+
+
+//Inicio Caso de Prueba 5//
+
+Input:
+with
+begin
+    a<-a::$b;
+    for i from 1 to 4 ->
+        a<-a;
+    end
+end
+
+***Resultado:
+
+SECUENCIA
+ASIGNACION
+	identificador: a
+	operacion: concatenacion
+		operador izquierdo: VARIABLE
+		arreglo: a
+		operacion: shift
+			operador derecho: VARIABLE
+			arreglo: b
+ITERACION DETERMINADA
+	
+	valor inferior: 1
+	valor superior: 4
+	ASIGNACION
+		identificador: a
+		valor: a
+
+
+
+
+//Inicio Caso de Prueba 6//
+
+Input:
+with
+begin
+    a<-a[1]::$b;
+end
+
+***Resultado:
+
+ASIGNACION
+	identificador: a
+	operacion: concatenacion
+		operacion: acceder a elemento del arreglo
+			operador izquierdo: VARIABLE
+			valor: a
+			operador derecho: LITERAL ENTERO
+			valor: 1
+		operacion: shift
+			
+
+
+
+
+//Inicio Caso de Prueba 7//
+
+Input:
+with
+begin
+    a[0]<-a[1]::$b;
+end
+
+***Resultado:
+
+ASIGNACION
+	operacion: acceder a elemento del arreglo
+		identificador: a
+		valor: 0
+	operacion: concatenacion
+		operacion: acceder a elemento del arreglo
+			operador izquierdo: VARIABLE
+			valor: a
+			operador derecho: LITERAL ENTERO
+			valor: 1
+		operacion: shift
+			
+
+
+
+
+//Inicio Caso de Prueba 8//
+
+Input:
+with
+begin
+    with
+    begin
+        a<-a::$b;
+        for i from 1 to 4 ->
+            a<-a;
+        end
+    end
+end
+
+***Resultado:
+
+SECUENCIA
+ASIGNACION
+	identificador: a
+	operacion: concatenacion
+		operador izquierdo: VARIABLE
+		arreglo: a
+		operacion: shift
+			operador derecho: VARIABLE
+			arreglo: b
+ITERACION DETERMINADA
+	
+	valor inferior: 1
+	valor superior: 4
+	ASIGNACION
+		identificador: a
+		valor: a
+
+
+
+
+//Inicio Caso de Prueba 9//
+
+Input:
+with
+begin
+    with
+        var a : int
+    begin
+        a<-a::$b;
+        for i from 1 to 4 ->
+            a<-a;
+        end
+    end
+end
+
+***Resultado:
+
+SECUENCIACION
+
+	DECLARACIONES
+	contenedor: VARIABLE
+	identificador: a
+	expresion: LITERAL ENTERO
+	SECUENCIA
+	ASIGNACION
+		identificador: a
+		operacion: concatenacion
+			operador izquierdo: VARIABLE
+			arreglo: a
+			operacion: shift
+				operador derecho: VARIABLE
+				arreglo: b
+	ITERACION DETERMINADA
+		
+		valor inferior: 1
+		valor superior: 4
+		ASIGNACION
+			identificador: a
+			valor: a
+
+
+
+
+//Inicio Caso de Prueba 10//
+
+Input:
+begin
+    with
+        var a : int
+    begin
+        a<-a::$b;
+        for i from 1 to 4 ->
+            a<-a++;
+            a<-a--;
+        end
+    end
+end
+
+***Resultado:
+
+SECUENCIACION
+
+	DECLARACIONES
+	contenedor: VARIABLE
+	identificador: a
+	expresion: LITERAL ENTERO
+	SECUENCIA
+	ASIGNACION
+		identificador: a
+		operacion: concatenacion
+			operador izquierdo: VARIABLE
+			arreglo: a
+			operacion: shift
+				operador derecho: VARIABLE
+				arreglo: b
+	ITERACION DETERMINADA
+		
+		valor inferior: 1
+		valor superior: 4
+		SECUENCIA
+		ASIGNACION
+			identificador: a
+			operacion: siguiente caracter
+				valor: a
+		ASIGNACION
+			identificador: a
+			operacion: caracter anterior
+				valor: a
+
+
+
+
+//Inicio Caso de Prueba 11//
+
+Input:
+begin
+    if a/\b ->
+        print a;
+    end
+end
+
+***Resultado:
+
+CONDICIONAL
+	guardia: conjuncion
+		operador izquierdo: VARIABLE
+		valor: a
+		operador derecho: VARIABLE
+		valor: b
+	ENTRADA/SALIDA
+	EXITO
+		
+
+
+
+
+//Inicio Caso de Prueba 12//
+
+Input:
+begin
+    if a/\b ->
+        print a[1,2];
+        print a[1];
+    end
+end
+
+***Resultado:
+
+CONDICIONAL
+	guardia: conjuncion
+		operador izquierdo: VARIABLE
+		valor: a
+		operador derecho: VARIABLE
+		valor: b
+	SECUENCIA
+EXITO
+	ENTRADA/SALIDA
+		operacion: acceder a elemento del arreglo
+			
+			rangoArreglo
+			valor: 1
+			valor: 2
+	ENTRADA/SALIDA
+		operacion: acceder a elemento del arreglo
+			
+			valor: 1
+
+
+
+
+//Inicio Caso de Prueba 13//
+
+Input:
+begin
+	a <- a::b;
+	a <- $a;
+    for i from 1 to 4 ->
+        a <- a[0][1] + b[1];
+    end
+end
+
+***Resultado:
+
+SECUENCIA
+ASIGNACION
+	identificador: a
+	operacion: concatenacion
+		operador izquierdo: VARIABLE
+		arreglo: a
+		operador derecho: VARIABLE
+		arreglo: b
+SECUENCIA
+ASIGNACION
+	identificador: a
+	operacion: shift
+		arreglo: a
+ITERACION DETERMINADA
+	
+	valor inferior: 1
+	valor superior: 4
+	ASIGNACION
+		identificador: a
+		operacion: suma
+			operacion: acceder a elemento del arreglo
+				operacion: acceder a elemento del arreglo
+					operador izquierdo: VARIABLE
+					valor: a
+					operador derecho: LITERAL ENTERO
+					valor: 0
+				valor: 1
+			operacion: acceder a elemento del arreglo
+				
+				valor: 1
+
+
+
+
+//Inicio Caso de Prueba 14//
+
+Input:
+begin
+	a <- a::b::x::c;
+end
+
+***Resultado:
+
+ASIGNACION
+	identificador: a
+	operacion: concatenacion
+		operacion: concatenacion
+			operacion: concatenacion
+				operador izquierdo: VARIABLE
+				arreglo: a
+				operador derecho: VARIABLE
+				arreglo: b
+			
+		
+
+
+
+
+//Inicio Caso de Prueba 15//
+
+Input:
+begin
+    a <- $$$a;
+    a <- a++++++--;
+    a <- a-b;
+end
+
+***Resultado:
+
+SECUENCIA
+ASIGNACION
+	identificador: a
+	operacion: shift
+		operacion: shift
+			operacion: shift
+				arreglo: a
+SECUENCIA
+ASIGNACION
+	identificador: a
+	operacion: caracter anterior
+		operacion: siguiente caracter
+			operacion: siguiente caracter
+				operacion: siguiente caracter
+					valor: a
+ASIGNACION
+	identificador: a
+	operacion: resta
+		operador izquierdo: VARIABLE
+		valor: a
+		operador derecho: VARIABLE
+		valor: b
+
+
+
+
+//Inicio Caso de Prueba 16//
+
+Input:
+begin
+    for i from 1 to (n-1) ->
+        a <- $a;
+    end
+end
+
+***Resultado:
+
+ITERACION DETERMINADA
+	
+	valor inferior: 1
+	operacion: resta
+		operador izquierdo: VARIABLE
+		valor: n
+		operador derecho: LITERAL ENTERO
+		valor: 1
+	ASIGNACION
+		identificador: a
+		operacion: shift
+			arreglo: a
+
+
+
