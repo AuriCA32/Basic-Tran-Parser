@@ -160,3 +160,17 @@ begin
     end
 end
 //END//
+
+//CASO// 17
+with
+    var x <- 4, y<-9 : int
+    var m <- 'a', p <- 'p' : char
+    var p : array[1] of array[2] of array[3] of array[4] of int
+begin
+    with
+        var m : int
+    begin
+        a<-4+5+6+8;
+    end
+end
+//END//

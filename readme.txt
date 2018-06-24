@@ -23,16 +23,16 @@ Para ello puede ejecutar:
 
 *****Casos de prueba*****
 
-    Tambien fueron incluidos casos de prueba. Estos se encuentran en el archivo
-CdePrueba. Para correrlos, basta con hacer:
+    Tambien fueron incluidos casos de prueba, los cuales están en la ruta
+"casosPruebaParser/CdePrueba". Para correrlos, basta con hacer:
     
-    ./probarCasos CdePrueba
+    ./probarCasos casosPruebaParser/CdePrueba
 
     Se generara un archivo outputcasos en el directorio con la respuesta a cada caso.
     
     De igual forma, para imprimir el arbol parentizado:
 
-    ./probarCasos CdePrueba -b
+    ./probarCasos casosPruebaParser/CdePrueba -b
 
 
 *****Acerca de la gramatica*****

@@ -1,0 +1,15 @@
+with var num,cat : array [2+3] of array [4] of int
+begin
+    print eq;
+    with
+    	var num,i : int
+    	var p,q : bool
+    begin
+    	p <- True;    
+        i <- 5 >= 4-3;
+	    i <- 4;
+        i <- 4*(3+2);
+        read y4;
+        print 4*34;
+    end
+end
