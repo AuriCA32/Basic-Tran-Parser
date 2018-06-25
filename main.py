@@ -266,93 +266,49 @@ class Node:
 	
 	##FALTA AGREGAR UN ARREGLO GLOBAL DE VAR CON SUS VALUES
 	def calc_tipo(self, cola):
-		if isinstance(self, Node):
-			#Vemos los hijos y sus tipos 
-			hijo1=None
-			tipo1=""
-			hijo2=None
-			tipo2=""
-			if len(self.children)==2:
-				hijo1=self.children[0]
-				hijo2=self.children[1]
-			elif len(self.children)==1:
-				hijo1=self.children[0]	
-			elif len(self.children)==3:
-				pass
-			cola_aux=deque([])
+		#Vemos los hijos y sus tipos 
+		value_hijo=[]
+		type_hijo=[]
+		cola_aux=deque([])
+		i=0
+		for i in len(self.children): #Es 2 o 1
 			#Para hijo1
-			if isinstance(hijo1,Node):
-				tipo1=hijo1.tipo_var
-			elif isinstance(hijo1,str): 
+			if isinstance(self.children[i],Node):
+				type_hijo.append(self.children[i].tipo_var)
+			elif isinstance(self.children[i],str): 
 				#Si es true o false
-				if hijo1=="true":
-					tipo1="bool"
-				elif hijo1=="false":
-					tipo1="bool"
+				if self.children[i]=="true":
+					value_hijo.append(self.children[i])
+					type_hijo.append("bool")
+				elif self.children[i]=="false":
+					value_hijo.append(self.children[i])
+					type_hijo.append("bool")
 				#Si tiene ' o "
-				elif ("\"" in hijo1) or ("\'" in hijo1):
-					tipo1="char"
-				else: #Buscamos en la tabla de simbolos la variable
+				elif ("\"" in self.children[i]) or ("\'" in self.children[i]):
+					value_hijo.append(self.children[i])
+					type_hijo.append("char")
+				else: #Buscamos en la tabla de simbolos la variable FALTA COLOCAR VALOR
 					declarada=False
 					while cola:
 						elemento=cola.popleft()
 						cola_aux.append(elemento)
-						if hijo1 in elemento:
-							tipo1=elemento[hijo1]
+						if self.children[i] in elemento: #Si esta en algun diccionario
+							type_hijo.append.(elemento[self.children[i]])
 							declarada=True
 							break
 					#Si se vacia la cola y no fue declarada
 					if not cola and not declarada:#Error
-						errores_contexto.append("Error: variable "+hijo1+" no declarada.")
+						errores_contexto.append("Error: variable "+self.children[i]+" no declarada.")
 						return
 					#Acomodo la cola si no se termino de vaciar
 					else:
 						while cola:
 							elemento=cola.popleft()
 							cola_aux.append(elemento)
-			elif isinstance(hijo1,int):
-				tipo1="int"
+			elif isinstance(self.children[i],int):
+				type_hijo.append("int")
 			
-			#Para hijo2
-			if isinstance(hijo2,Node):
-				tipo2=hijo2.tipo_var
-			elif isinstance(hijo2,str): 
-				#Si es true o false
-				if hijo2=="true":
-					tipo2="bool"
-				elif hijo2=="false":
-					tipo2="bool"
-				#Si tiene ' o "
-				elif ("\"" in hijo2) or ("\'" in hijo2):
-					tipo2="char"
-				else: #Buscamos en la tabla de simbolos la variable
-					declarada=False
-					if not cola_aux: #Si la cola_aux esta vacia, no se uso antes cola
-						while cola:
-							elemento=cola.popleft()
-							cola_aux.append(elemento)
-							if hijo2 in elemento:
-								tipo2=elemento[hijo2]
-								declarada=True
-								break
-						#Si se vacia la cola y no fue declarada
-						if not cola and not declarada:#Error
-							errores_contexto.append("Error: variable "+hijo2+" no declarada.")
-							return
-					else:
-						while cola_aux:
-							elemento=cola_aux.popleft()
-							if hijo2 in elemento:
-								tipo2=elemento[hijo2]
-								declarada=True
-								break
-						#Si se vacia la cola y no fue declarada
-						if not cola_aux and not declarada:#Error
-							errores_contexto.append("Error: variable "+hijo2+" no declarada.")
-							return
-			elif isinstance(hijo2,int):
-				tipo2="int"
-			
+			###MODIFICAR PARA QUE USE ARREGLOS type_hijo y value_hijo
 			if self.type in operacion:
 				if "array" in tipo1:
 					tipo1.strip("array-")
@@ -479,19 +435,211 @@ class Node:
 				elif tipo1!=tipo2:
 					errores_contexto.append("Error: asignación sobre tipos de operandos incompatibles\
 											en la línea "+str(self.linea)+".")
+					return		
+			return
+
+		if len(self.children)==2:
+			hijo1=self.children[0]
+			hijo2=self.children[1]
+		elif len(self.children)==1:
+			hijo1=self.children[0]
+		
+		#Para hijo1
+		if isinstance(hijo1,Node):
+			tipo1=hijo1.tipo_var
+		elif isinstance(hijo1,str): 
+			#Si es true o false
+			if hijo1=="true" or hijo1=="false":
+				tipo1="bool"
+			#Si tiene ' o "
+			elif ("\"" in hijo1) or ("\'" in hijo1):
+				tipo1="char"
+			else: #Buscamos en la tabla de simbolos la variable
+				declarada=False
+				while cola:
+					elemento=cola.popleft()
+					cola_aux.append(elemento)
+					if hijo1 in elemento:
+						tipo1=elemento[hijo1]
+						declarada=True
+						break
+				#Si se vacia la cola y no fue declarada
+				if not cola and not declarada:#Error
+					errores_contexto.append("Error: variable "+hijo1+" no declarada.")
+					return
+				#Acomodo la cola si no se termino de vaciar
+				else:
+					while cola:
+						elemento=cola.popleft()
+						cola_aux.append(elemento)
+		elif isinstance(hijo1,int):
+			tipo1="int"
+		
+		#Para hijo2
+		if isinstance(hijo2,Node):
+			tipo2=hijo2.tipo_var
+		elif isinstance(hijo2,str): 
+			#Si es true o false
+			if hijo1=="true" or hijo1=="false":
+				tipo1="bool"
+			#Si tiene ' o "
+			elif ("\"" in hijo2) or ("\'" in hijo2):
+				tipo2="char"
+			else: #Buscamos en la tabla de simbolos la variable
+				declarada=False
+				if not cola_aux: #Si la cola_aux esta vacia, no se uso antes cola
+					while cola:
+						elemento=cola.popleft()
+						cola_aux.append(elemento)
+						if hijo2 in elemento:
+							tipo2=elemento[hijo2]
+							declarada=True
+							break
+					#Si se vacia la cola y no fue declarada
+					if not cola and not declarada:#Error
+						errores_contexto.append("Error: variable "+hijo2+" no declarada.")
+						return
+				else:
+					while cola_aux:
+						elemento=cola_aux.popleft()
+						if hijo2 in elemento:
+							tipo2=elemento[hijo2]
+							declarada=True
+							break
+					#Si se vacia la cola y no fue declarada
+					if not cola_aux and not declarada:#Error
+						errores_contexto.append("Error: variable "+hijo2+" no declarada.")
+						return
+		elif isinstance(hijo2,int):
+			tipo2="int"
+		
+		if self.type in operacion:
+			if "array" in tipo1:
+				tipo1.strip("array-")
+			if "array" in tipo2:
+				tipo2.strip("array-")
+			
+			if tipo1==tipo2:
+				self.tipo_var=tipo1
+			elif tipo1!=tipo2:
+				errores_contexto.append("Error: operación sobre tipos de variables incompatibles\
+										en la línea "+str(self.linea)+".")
+				return
+			#AQUI SE REALIZAN LAS OPERACIONES
+			if self.tipo_var=="int":
+				if "suma" in self.type:
+					pass
+				elif "resta" in self.type:
+					pass
+				elif "multiplicacion" in self.type:
+					pass
+				elif "division" in self.type:
+					pass
+				elif "modulo" in self.type:
+					pass
+				elif "punto" in self.type: 
+					pass
+			elif self.tipo_var=="bool":
+				if "conjuncion" in self.type:
+					pass
+				elif "disyuncion" in self.type:
+					pass
+				elif "igual" in self.type:
+					pass
+				elif "diferente" in self.type:
+					pass
+				elif "menor" in self.type:
+					pass
+				elif "menorIgual" in self.type: 
+					pass
+				elif "mayor" in self.type: 
+					pass
+				elif "mayorIgual" in self.type: 
+					pass
+				elif "menosUnario" in self.type: 
+					pass
+				elif "negacion" in self.type: 
+					pass
+
+		elif self.type in arreglo:
+			if "concatenacion" in self.type:
+				if "array" in tipo1 and "array" in tipo2:
+					self.tipo_var=tipo1
+				else:
+					errores_contexto.append("Error: operación sobre tipos de variables incompatibles\
+									en la línea "+str(self.linea)+".")
+					return
+			elif "shift" in self.type:
+				if "array" in tipo1:
+					self.tipo_var=tipo1
+					#AQUI SE HACE OPERACION SHIFT
+				else:
+					errores_contexto.append("Error: operación sobre tipo de variable incompatible\
+									en la línea "+str(self.linea)+".")
+					return
+			#NO ESTOY CLARA COMO MANEJAR ESTO, hay que poner value
+			elif "arrayInterno" in self.type:
+				if "array" in tipo1:
+					self.tipo_var=tipo1
+					#AQUI SE HACE OPERACION
+				else:
+					errores_contexto.append("Error: operación sobre tipo de variable incompatible\
+									en la línea "+str(self.linea)+".")
+					return
+			elif "rango" in self.type:
+				if "array" in tipo1:
+					self.tipo_var=tipo1
+					#AQUI SE HACE OPERACION
+				else:
+					errores_contexto.append("Error: operación sobre tipo de variable incompatible\
+									en la línea "+str(self.linea)+".")
+					return
+			elif "secuencia" in self.type:
+				if "array" in tipo1:
+					self.tipo_var=tipo1
+					#AQUI SE HACE OPERACION
+				else:
+					errores_contexto.append("Error: operación sobre tipo de variable incompatible\
+									en la línea "+str(self.linea)+".")
+					return
+			elif self.type=="accederEnArreglo":
+				if "array" in tipo1:
+					self.tipo_var=tipo1
+					#AQUI SE HACE OPERACION
+				else:
+					errores_contexto.append("Error: operación sobre tipo de variable incompatible\
+									en la línea "+str(self.linea)+".")
 					return
 
-				#AQUI SE CAMBIA EL VALOR DE LA VARIABLE
+		elif self.type in caracter:
+			if "array" in tipo1:
+				tipo1.strip("array-")
+			if tipo1=="char":
+				self.tipo_var=tipo1
+				if "anterior" in self.type:
+					#AQUI SE HACE OPERACION
+					pass
+				elif "siguiente" in self.type:
+					#AQUI SE HACE OPERACION
+					pass
+				elif "Ascii" in self.type:
+					#AQUI SE HACE OPERACION
+					pass
+			else:
+				errores_contexto.append("Error: operación sobre tipo de variable incompatible\
+									en la línea "+str(self.linea)+".")
+				return
 
-			elif self.type in declaracion:#revisar cuantos hijos tiene
-				pass
-			#Si es for, if o while hay que ver que el tipo sobre el que itera es un int o bool
-
-			#Si es read o print, tipo y value es none, default
+		elif self.type=="asignacion":
+			if "array" in tipo1:
+				tipo1.strip("array-")
 			
-		else:#cuando toma cosas que no son nodos, debe agregar sus valores al arreglo
-			pass
-		
+			if tipo1==tipo2:
+				self.tipo_var=tipo1
+			elif tipo1!=tipo2:
+				errores_contexto.append("Error: asignación sobre tipos de operandos incompatibles\
+										en la línea "+str(self.linea)+".")
+				return		
 		return
 		
 
