@@ -1128,7 +1128,6 @@ def redeclaracion():
 		while lista:
 			igual=str(lista.popleft())
 			errores_contexto.append("Error: redeclaración de variable "+igual+" en el bloque interno with "+str(i)+".")
-			print("Error: redeclaración de variable "+igual+" en el bloque interno with "+str(i)+".")
 			i=i+1
 			return
 	return
