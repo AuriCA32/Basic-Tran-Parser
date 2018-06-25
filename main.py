@@ -3,6 +3,7 @@ import ply.yacc as yacc
 import sys
 import re
 from collections import OrderedDict
+from collections import deque
 
 #Listas de tokens y errores
 tokError=[] #Global, si esta vacio no hay errores
@@ -241,7 +242,10 @@ operacion=["operacion-suma",
 
 arreglo=["concatenacion",
 "accederEnArreglo",
-"shift"]
+"shift",
+"arrayInterno",
+"rangoArreglo",
+"secuencia-accederEnArreglo"]
 
 caracter=["siguienteChar",
 "anteriorChar",
@@ -256,62 +260,245 @@ class Node:
 		else:
 			self.children = [ ]
 		self.leaf = leaf
-		self.resultado=None
+		self.value=None
 		self.tipo_var=None
-		self.linea=linea ####VER SI ES NECESARIO PONERLO
+		self.linea=linea
 	
-	# def calc_resultado(self, Node, hijo1, hijo2):
-	# 	if isinstance(hijo1,Node):
-	# 		resultado1=hijo1.resultado
-	# 		tipo1=hijo1.tipo_var
-	# 	else:
-	# 		resultado1=hijo1
-	# 		tipo1=type(hijo1)
+	##FALTA AGREGAR UN ARREGLO GLOBAL DE VAR CON SUS VALUES
+	def calc_tipo(self, cola):
+		if isinstance(self, Node):
+			#Vemos los hijos y sus tipos 
+			hijo1=None
+			tipo1=""
+			hijo2=None
+			tipo2=""
+			if len(self.children)==2:
+				hijo1=self.children[0]
+				hijo2=self.children[1]
+			elif len(self.children)==1:
+				hijo1=self.children[0]	
+			elif len(self.children)==3:
+				pass
+			cola_aux=deque([])
+			#Para hijo1
+			if isinstance(hijo1,Node):
+				tipo1=hijo1.tipo_var
+			elif isinstance(hijo1,str): 
+				#Si es true o false
+				if hijo1=="true":
+					tipo1="bool"
+				elif hijo1=="false":
+					tipo1="bool"
+				#Si tiene ' o "
+				elif ("\"" in hijo1) or ("\'" in hijo1):
+					tipo1="char"
+				else: #Buscamos en la tabla de simbolos la variable
+					declarada=False
+					while cola:
+						elemento=cola.popleft()
+						cola_aux.append(elemento)
+						if hijo1 in elemento:
+							tipo1=elemento[hijo1]
+							declarada=True
+							break
+					#Si se vacia la cola y no fue declarada
+					if not cola and not declarada:#Error
+						errores_contexto.append("Error: variable "+hijo1+" no declarada.")
+						return
+					#Acomodo la cola si no se termino de vaciar
+					else:
+						while cola:
+							elemento=cola.popleft()
+							cola_aux.append(elemento)
+			elif isinstance(hijo1,int):
+				tipo1="int"
 			
-	# 	if isinstance(hijo2,Node):
-	# 		resultado1=hijo1.resultado
-	# 		tipo2=hijo2.tipo_var
-	# 	else:
-	# 		resultado1=hijo1
-	# 		tipo2=type(hijo2)
+			#Para hijo2
+			if isinstance(hijo2,Node):
+				tipo2=hijo2.tipo_var
+			elif isinstance(hijo2,str): 
+				#Si es true o false
+				if hijo2=="true":
+					tipo2="bool"
+				elif hijo2=="false":
+					tipo2="bool"
+				#Si tiene ' o "
+				elif ("\"" in hijo2) or ("\'" in hijo2):
+					tipo2="char"
+				else: #Buscamos en la tabla de simbolos la variable
+					declarada=False
+					if not cola_aux: #Si la cola_aux esta vacia, no se uso antes cola
+						while cola:
+							elemento=cola.popleft()
+							cola_aux.append(elemento)
+							if hijo2 in elemento:
+								tipo2=elemento[hijo2]
+								declarada=True
+								break
+						#Si se vacia la cola y no fue declarada
+						if not cola and not declarada:#Error
+							errores_contexto.append("Error: variable "+hijo2+" no declarada.")
+							return
+					else:
+						while cola_aux:
+							elemento=cola_aux.popleft()
+							if hijo2 in elemento:
+								tipo2=elemento[hijo2]
+								declarada=True
+								break
+						#Si se vacia la cola y no fue declarada
+						if not cola_aux and not declarada:#Error
+							errores_contexto.append("Error: variable "+hijo2+" no declarada.")
+							return
+			elif isinstance(hijo2,int):
+				tipo2="int"
+			
+			if self.type in operacion:
+				if "array" in tipo1:
+					tipo1.strip("array-")
+				if "array" in tipo2:
+					tipo2.strip("array-")
+				
+				if tipo1==tipo2:
+					self.tipo_var=tipo1
+				elif tipo1!=tipo2:
+					errores_contexto.append("Error: operación sobre tipos de variables incompatibles\
+											en la línea "+str(self.linea)+".")
+					return
+				#AQUI SE REALIZAN LAS OPERACIONES
+				if self.tipo_var=="int":
+					if "suma" in self.type:
+						pass
+					elif "resta" in self.type:
+						pass
+					elif "multiplicacion" in self.type:
+						pass
+					elif "division" in self.type:
+						pass
+					elif "modulo" in self.type:
+						pass
+					elif "punto" in self.type: 
+						pass
+				elif self.tipo_var=="bool":
+					if "conjuncion" in self.type:
+						pass
+					elif "disyuncion" in self.type:
+						pass
+					elif "igual" in self.type:
+						pass
+					elif "diferente" in self.type:
+						pass
+					elif "menor" in self.type:
+						pass
+					elif "menorIgual" in self.type: 
+						pass
+					elif "mayor" in self.type: 
+						pass
+					elif "mayorIgual" in self.type: 
+						pass
+					elif "menosUnario" in self.type: 
+						pass
+					elif "negacion" in self.type: 
+						pass
+
+			elif self.type in arreglo:
+				if "concatenacion" in self.type:
+					if "array" in tipo1 and "array" in tipo2:
+						self.tipo_var=tipo1
+					else:
+						errores_contexto.append("Error: operación sobre tipos de variables incompatibles\
+										en la línea "+str(self.linea)+".")
+						return
+				elif "shift" in self.type:
+					if "array" in tipo1:
+						self.tipo_var=tipo1
+						#AQUI SE HACE OPERACION SHIFT
+					else:
+						errores_contexto.append("Error: operación sobre tipo de variable incompatible\
+										en la línea "+str(self.linea)+".")
+						return
+				#NO ESTOY CLARA COMO MANEJAR ESTO, hay que poner value
+				elif "arrayInterno" in self.type:
+					if "array" in tipo1:
+						self.tipo_var=tipo1
+						#AQUI SE HACE OPERACION
+					else:
+						errores_contexto.append("Error: operación sobre tipo de variable incompatible\
+										en la línea "+str(self.linea)+".")
+						return
+				elif "rango" in self.type:
+					if "array" in tipo1:
+						self.tipo_var=tipo1
+						#AQUI SE HACE OPERACION
+					else:
+						errores_contexto.append("Error: operación sobre tipo de variable incompatible\
+										en la línea "+str(self.linea)+".")
+						return
+				elif "secuencia" in self.type:
+					if "array" in tipo1:
+						self.tipo_var=tipo1
+						#AQUI SE HACE OPERACION
+					else:
+						errores_contexto.append("Error: operación sobre tipo de variable incompatible\
+										en la línea "+str(self.linea)+".")
+						return
+				elif self.type=="accederEnArreglo":
+					if "array" in tipo1:
+						self.tipo_var=tipo1
+						#AQUI SE HACE OPERACION
+					else:
+						errores_contexto.append("Error: operación sobre tipo de variable incompatible\
+										en la línea "+str(self.linea)+".")
+						return
+
+			elif self.type in caracter:
+				if "array" in tipo1:
+					tipo1.strip("array-")
+				if tipo1=="char":
+					self.tipo_var=tipo1
+					if "anterior" in self.type:
+						#AQUI SE HACE OPERACION
+						pass
+					elif "siguiente" in self.type:
+						#AQUI SE HACE OPERACION
+						pass
+					elif "Ascii" in self.type:
+						#AQUI SE HACE OPERACION
+						pass
+				else:
+					errores_contexto.append("Error: operación sobre tipo de variable incompatible\
+										en la línea "+str(self.linea)+".")
+					return
+
+			elif self.type=="asignacion":
+				if "array" in tipo1:
+					tipo1.strip("array-")
+				
+				if tipo1==tipo2:
+					self.tipo_var=tipo1
+				elif tipo1!=tipo2:
+					errores_contexto.append("Error: asignación sobre tipos de operandos incompatibles\
+											en la línea "+str(self.linea)+".")
+					return
+
+				#AQUI SE CAMBIA EL VALOR DE LA VARIABLE
+
+			elif self.type in declaracion:#revisar cuantos hijos tiene
+				pass
+			#Si es for, if o while hay que ver que el tipo sobre el que itera es un int o bool
+
+			#Si es read o print, tipo y value es none, default
+			
+		else:#cuando toma cosas que no son nodos, debe agregar sus valores al arreglo
+			pass
 		
-		#Si el tipo es un string se tiene que buscar en el diccionario de qué tipo es la variable
+		return
+		
 
-		# if tipo1!=tipo2 and tipo1=str and tipo2!=str: #Si no son id
-		# 	#Agrega un error a una lista de errores
-		# 	errores_contexto.append("Error: operación entre diferentes tipos de variables\
-		# 							 en la linea "+Node.linea+".")
-		# 	return
-		# elif tipo1==str and tipo2==str:
-		# 	Node.tipo_var=tipo1
-		# elif tipo1!=str and tipo2==str:
-		# 	Node.tipo_var=tipo1
-		# elif tipo1==str and tipo2!=str:
-		# 	Node.tipo_var=tipo2
-
-		# if Node.type in operacion:
-		# 	if Node.tipo_var==int:
-		# 		if "suma" in Node.type:
-					
-		# 		else:
-		# 			errores_contexto.append("Error: tipo de variable inválida para operación\
-		# 							 en la linea "+Node.linea+".")	
-		# 	elif Node.tipo_var==bool:
-		# 		else:
-		# 			errores_contexto.append("Error: tipo de variable inválida para operación\
-		# 							 en la linea "+Node.linea+".")
-		# 	elif Node.tipo_var=="char":
-		# 		else:
-		# 			errores_contexto.append("Error: tipo de variable inválida para operación\
-		# 							 en la linea "+Node.linea+".")
-		# 	elif Node.tipo_var=="array":
-			
-		# 		else:
-		# 			errores_contexto.append("Error: tipo de variable inválida para operación\
-		# 							 en la linea "+Node.linea+".")
-
-lista_diccionarios=[]
+lista_repetidas=deque([])
+lista_diccionarios=deque([])
 diccionario=OrderedDict()
+repetidas=deque([])
 
 def p_program(p):
 	'''program : start'''
@@ -324,13 +511,13 @@ def p_start(p):
 			 | TkWith TkBegin TkEnd
 			 | TkWith TkBegin cond TkEnd
 			 | TkBegin TkEnd'''
-	global diccionario
+	global diccionario, repetidas
 	if len(p)>4:
-
 		lista_diccionarios.append(diccionario)
+		lista_repetidas.append(repetidas)
 		diccionario=OrderedDict()
+		repetidas=deque([])
 
-		#print("largo: "+str(len(lista_diccionarios)))
 		if p[2] == "begin":
 			p[0] = p[3]
 		elif p[3] == "begin" and p[4]=="end":
@@ -338,11 +525,11 @@ def p_start(p):
 		else:
 			p[0] = Node('comienzo',[p[2],p[4]],None,p.lineno)
 	elif len(p)==4 and p[2] != "begin":
-		
 		lista_diccionarios.append(diccionario)
+		lista_repetidas.append(repetidas)
 		diccionario=OrderedDict()
+		repetidas=deque([])
 
-		#print("largo: "+str(len(lista_diccionarios)))
 		p[0] = p[2]
 	else:
 		p[0] = None
@@ -365,8 +552,10 @@ def p_declaracion_id(p):
 					 | declaracionIdNum
 					 | declaracionIdBool
 					 | declaracionIdChar'''
-	global diccionario
+	global diccionario, repetidas
 	if len(p)>2:
+		if str(p[1]) in diccionario.keys():
+			repetidas.append(str(p[1]))
 		diccionario[str(p[1])]="id" 
 
 		p[0]=Node('secuencia_declaracionId',[p[1],p[3]],None,p.lineno)
@@ -377,7 +566,10 @@ def p_declaracion_id(p):
 def p_declaracion_idNum(p):
 	'''declaracionIdNum : TkId TkAsignacion exp TkDosPuntos TkInt
 						| TkId TkDosPuntos TkInt'''
-	global diccionario
+	global diccionario, repetidas
+
+	if str(p[1]) in diccionario.keys():
+		repetidas.append(str(p[1]))
 	diccionario[str(p[1])]="int"
 	
 	if len(p)>4:
@@ -394,13 +586,11 @@ def p_declaracion_idNum(p):
 def p_declaracion_idChar(p):
 	'''declaracionIdChar : TkId TkAsignacion exp TkDosPuntos TkChar
 						 | TkId TkDosPuntos TkChar'''
-	global diccionario
-	#dicc=len(lista_diccionarios)
-	#print("dicc "+str(dicc))
+	global diccionario, repetidas
+	if str(p[1]) in diccionario.keys():
+		repetidas.append(str(p[1]))
 	diccionario[str(p[1])]="char"
-	#print(lista_diccionarios[dicc-1])
-	#diccionario=lista_diccionarios[dicc-1]
-	#diccionario[str(p[1])]="char"
+
 	if len(p)>4:
 		Nodo = Node('asignacion',[p[1],p[3]],p[2],p.lineno)
 		if p[4]==",":
@@ -416,13 +606,11 @@ def p_declaracion_idChar(p):
 def p_declaracion_idBool(p):
 	'''declaracionIdBool : TkId TkAsignacion exp TkDosPuntos TkBool
 						 | TkId TkDosPuntos TkBool'''
-	global diccionario
-	#dicc=len(lista_diccionarios)
-	#print("dicc "+str(dicc))
+	global diccionario, repetidas
+	if str(p[1]) in diccionario.keys():
+		repetidas.append(str(p[1]))
 	diccionario[str(p[1])]="bool"
-	#print(lista_diccionarios[dicc-1])
-	#diccionario=lista_diccionarios[dicc-1]
-	#diccionario[str(p[1])]="bool"
+
 	if len(p)>4:
 		Nodo = Node('asignacion',[p[1],p[3]],p[2],p.lineno)
 		if p[4]==",":
@@ -437,8 +625,10 @@ def p_declaracion_idBool(p):
 def p_declaracion_array(p):
 	'''declaracionArray : TkId TkComa declaracionArray
 						| TkId TkDosPuntos TkArray TkCorcheteAbre TkNum TkCorcheteCierra TkOf type'''
-	global diccionario
-	diccionario[str(p[1])]="array"
+	global diccionario, repetidas
+	if str(p[1]) in diccionario.keys():
+		repetidas.append(str(p[1]))
+	diccionario[str(p[1])]="array-"+str(p[8])
 	
 	if len(p)>4:
 		p[0]=Node('declaracionArray',[p[1],p[5],p[8]],p[3],p.lineno)
@@ -497,12 +687,14 @@ def p_cond(p):
 			| TkId TkAsignacion exp TkPuntoComa cond
 			| TkId ingresarEnArreglo TkAsignacion exp TkPuntoComa
 			| TkId ingresarEnArreglo TkAsignacion exp TkPuntoComa cond'''
-	global diccionario
+	global diccionario, repetidas
 	if p[1]=="with":
 		#Se crea un nuevo diccionario
 		
 		lista_diccionarios.append(diccionario)
+		lista_repetidas.append(repetidas)
 		diccionario=OrderedDict()
+		repetidas=deque([])
 
 		if p[2] == "begin":
 			if p[3] == "end":
@@ -928,6 +1120,19 @@ def print_tree(node,n):
 					anterior=""
 	return sting
 
+def redeclaracion():
+	#Busca en la cola por diccionario
+	global lista_repetidas
+	i=0
+	for lista in lista_repetidas:
+		while lista:
+			igual=str(lista.popleft())
+			errores_contexto.append("Error: redeclaración de variable "+igual+" en el bloque interno with "+str(i)+".")
+			print("Error: redeclaración de variable "+igual+" en el bloque interno with "+str(i)+".")
+			i=i+1
+			return
+	return
+
 lexer.lineno=1
 
 yacc.yacc()
@@ -940,7 +1145,7 @@ if print_tokens_or_errors()==0: ####Falta formato de errores
 		if len(sys.argv)>2 and sys.argv[2]=="-b":
 			print(p)
 		else:
-			#print(p)
+			print(p)
 			for diccionario in lista_diccionarios:
 				lista=list(diccionario.keys())
 				for i in range(len(lista)):
@@ -950,4 +1155,5 @@ if print_tokens_or_errors()==0: ####Falta formato de errores
 						diccionario[key]=diccionario[prev]
 						pass
 				print(diccionario)
+			redeclaracion()
 			#print(print_tree(y,0))
