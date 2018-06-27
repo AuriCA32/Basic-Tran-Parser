@@ -271,14 +271,13 @@ class Node:
 		self.tipo_var=None
 		self.linea=linea
 	
-	##FALTA AGREGAR UN ARREGLO GLOBAL DE VAR CON SUS VALUES
 	def calc_tipo(self, cola_dicc, cola_values):
 		#Vemos los hijos y sus tipos 
 		value_hijo=[]
 		type_hijo=[]
 		cola_aux=deque([])
 		i=0
-		for i in len(self.children): #Es 2 o 1
+		for i in range(len(self.children)): #Es 2 o 1
 			if isinstance(self.children[i],Node):
 				value_hijo.append(self.children[i].value)
 				type_hijo.append(self.children[i].tipo_var)
@@ -292,32 +291,47 @@ class Node:
 					type_hijo.append("bool")
 				#Si tiene ' o "
 				elif ("\"" in self.children[i]) or ("\'" in self.children[i]):
-					value_hijo.append(self.children[i])
+					value_hijo.append(self.children[i][1:-1])
 					type_hijo.append("char")
 				else: #Buscamos en la tabla de simbolos la variable 
-					######################FALTA COLOCAR VALOR DE VARIABLES
 					declarada=False
-					while cola_dicc:
-						elemento=cola_dicc.popleft()
-						cola_aux.append(elemento)
-						if self.children[i] in elemento: #Si esta en algun diccionario
-							type_hijo.append(elemento[self.children[i]])
+					diccionario_aux=[]
+					valores_aux=[]
+					while cola_dicc and cola_values:
+						diccionario=cola_dicc.popleft()
+						valores=cola_values.popleft()
+						diccionario_aux.append(diccionario)
+						valores_aux.append(valores)
+						if self.children[i] in diccionario: #Si esta en algun diccionario
+							type_hijo.append(diccionario[self.children[i]])
+							value_hijo.append(valores[self.children[i]])
 							declarada=True
 							break
 					#Si se vacia la cola y no fue declarada
 					if not cola_dicc and not declarada:#Error
 						errores_contexto.append("Error: variable "+self.children[i]+" no declarada.")
 						return
-					#Acomodo la cola si no se termino de vaciar
+					#Acomodo las colas si no se terminaron de vaciar
 					else:
 						while cola_dicc:
-							elemento=cola_dicc.popleft()
-							cola_aux.append(elemento)
+							diccionario=cola_dicc.popleft()
+							diccionario_aux.append(diccionario)
+						while cola_values:
+							valores=cola_values.popleft()
+							valores_aux.append(valores)
 			elif isinstance(self.children[i],int):
 				type_hijo.append("int")
-				value_hijo[i]=self.children[i]
-			
+				value_hijo.append(self.children[i])
+		
+		#Si el value de algun hijo es None, no se puede realizar la operacion
+		for hijo in value_hijo:
+			if hijo=="None":
+				errores_contexto.append("Error: No se puede realizar operación sobre variable con \
+										valor None en la línea "+str(self.linea)+".")
+				return
+		
 		if len(type_hijo)==2: #operaciones y arreglo sin shift
+			
 			if self.type in operacion:
 				for hijo in type_hijo:
 					hijo.strip("array-")
@@ -328,20 +342,50 @@ class Node:
 					errores_contexto.append("Error: operación sobre tipos de variables incompatibles\
 											en la línea "+str(self.linea)+".")
 					return
-				###FALTA MODIFICAR EL DICCIONARIO GLOBAL DE VALORES
+				######FALTA MODIFICAR EL DICCIONARIO GLOBAL DE VALORES
 				if self.tipo_var=="int":
 					if "suma" in self.type:
 						self.value=value_hijo[0]+value_hijo[1]
+
 					elif "resta" in self.type:
 						self.value=value_hijo[0]-value_hijo[1]
+
 					elif "multiplicacion" in self.type:
 						self.value=value_hijo[0]*value_hijo[1]
+
 					elif "division" in self.type:
-						self.value=value_hijo[0]/value_hijo[1]
+						self.value=value_hijo[0]//value_hijo[1]
+
 					elif "modulo" in self.type:
 						self.value=value_hijo[0]%value_hijo[1]
+
 					elif "punto" in self.type:
 						self.value=value_hijo[0]-value_hijo[1]
+
+					elif "igual" in self.type:
+						self.value = value_hijo[0]==value_hijo[1]
+						self.tipo_var = "bool"
+
+					elif "diferente" in self.type:
+						self.value = value_hijo[0]!=value_hijo[1]
+						self.tipo_var = "bool"
+
+					elif self.type=="operacion-menor":
+						self.value = value_hijo[0]<value_hijo[1]
+						self.tipo_var = "bool"
+						
+					elif "menorIgual" in self.type: 
+						self.value = value_hijo[0] <= value_hijo[1]
+						self.tipo_var = "bool"
+
+					elif self.type=="operacion-mayor":
+						self.value = value_hijo[0]>value_hijo[1]
+						self.tipo_var = "bool"
+						
+					elif "mayorIgual" in self.type: 
+						self.value = value_hijo[0]>=value_hijo[1]
+						self.tipo_var = "bool"
+
 					else:
 						errores_contexto.append("Error: operación sobre tipos de variables incompatibles\
 												en la línea "+str(self.linea)+".")
@@ -360,17 +404,6 @@ class Node:
 					elif "diferente" in self.type:
 						self.value = value_hijo[0]!=value_hijo[1]
 
-					elif "menor" in self.type:
-						self.value = value_hijo[0]<value_hijo[1]
-						
-					elif "menorIgual" in self.type: 
-						self.value = value_hijo[0]<=value_hijo[1]
-
-					elif "mayor" in self.type: 
-						self.value = value_hijo[0]>value_hijo[1]
-						
-					elif "mayorIgual" in self.type: 
-						self.value = value_hijo[0]>=value_hijo[1]
 					else:
 						errores_contexto.append("Error: operación sobre tipos de variables incompatibles\
 												en la línea "+str(self.linea)+".")
@@ -426,6 +459,7 @@ class Node:
 				return
 			
 		elif len(type_hijo)==1: #shift, caracter, menosUnario, negacion
+			
 			if self.type in operacion:
 				type_hijo[0].strip("array-")
 				self.tipo_var=type_hijo[0]
@@ -464,6 +498,8 @@ class Node:
 			elif self.type in caracter:
 				if "array" in type_hijo[0]:
 					type_hijo[0].strip("array-")
+				elif type_hijo[0]=="char":
+					self.tipo_var=type_hijo[0]
 				else:
 					errores_contexto.append("Error: operación sobre tipo de variable incompatible\
 										en la línea "+str(self.linea)+".")
@@ -995,8 +1031,7 @@ def print_tree(node,n):
 
 		for child in node.children:
 			sting+="\n"+("\t"*n)+print_tree(child,n)
-	else: #Terminales
-		##FALTA CHAR Y ARRAY
+	else: 
 		if isinstance(node,int):
 			if anterior=="izq":
 				sting+="operador izquierdo: LITERAL ENTERO\n"
@@ -1161,7 +1196,6 @@ if print_tokens_or_errors()==0: ####Falta formato de errores
 						diccionario[key]=diccionario[prev]
 				print(diccionario)
 
-			###HAY QUE ACOMODAR LOS ARRAY QUE ESTAN CON array PARA PONERLES EL TAMAÑO DEL ARRAY ANTERIOR
 			for valor in lista_values:
 				lista=list(valor.keys())
 				for i in range(len(lista)):
@@ -1175,4 +1209,9 @@ if print_tokens_or_errors()==0: ####Falta formato de errores
 			if len(errores_contexto)!=0:
 				for error in errores_contexto:
 					print(error)
-			#print(print_tree(y,0))
+			
+			#Prueba de funcion de tipos y valores
+			nodo=Node("valorAscii",["\'b\'"],None,1)
+			nodo.calc_tipo(lista_diccionarios,lista_values)
+			print(str(nodo.value))
+			print(str(nodo.tipo_var))
