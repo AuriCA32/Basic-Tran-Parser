@@ -1,12 +1,17 @@
 
 with
     var x <- 4, y<-9 : int
-    var m <- 'a', p <- 'p' : char
-    var p : array[1] of array[2] of array[3] of array[4] of int
+    var m, p <- 'p' : char
+    var a : int
 begin
     with
-        var m : int
+        var s: int
     begin
-        a<-4+5+6+8;
+        with
+            var q : int
+        begin
+            a<-x+y;
+        end    
+        a<-x+y;
     end
 end

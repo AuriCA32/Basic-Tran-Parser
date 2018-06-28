@@ -257,6 +257,15 @@ diccionario=OrderedDict()
 repetidas=deque([])
 lista_values=deque([])
 values=OrderedDict()
+lista_repetidas_aux=deque([])
+lista_diccionarios_aux=deque([])
+lista_values_aux=deque([])
+
+def __getVarType__(node):
+	if isinstance(node,Node) and "declaracion" in node.type:
+		return __getVarType__(node.children(len(node.children)-1))
+	else:
+		return node
 
 #Crea el arbol
 class Node:
@@ -271,6 +280,37 @@ class Node:
 		self.tipo_var=None
 		self.linea=linea
 	
+	def adjuntarTablaSimbolos(self):
+		diccionario=OrderedDict()
+		repetidas=deque([])
+		values=OrderedDict()
+		diccionario,repetidas,values = self.__recorrerDeclaraciones__(diccionario,repetidas,values)
+		lista_repetidas_aux.append(repetidas)
+		lista_diccionarios_aux.append(diccionario)
+		lista_values_aux.append(values)
+
+	def __recorrerDeclaraciones__(self,diccionario,repetidas,values):	
+		if self==None:
+			return diccionario,repetidas,values
+		if isinstance(self,Node):
+			if "declaracion" in self.type:
+				for child in self.children:
+					if isinstance(child,Node) and "declaracion" in child.type:
+						diccionario,repetidas,values = child.__recorrerDeclaraciones__(diccionario,repetidas,values)
+					if "asignacion" in self.type:
+						values[str(child.children[0])]=str(child.children[1])
+						if diccionario[str(child.children[0])]:
+							repetidas.append(str(child.children[0]))
+						diccionario[str(child.children[0])]=__getVarType__(self)
+				if len(self.children)==3:
+					values[str(self.children[0])]=str(self.children[1])
+				else:
+					values[str(self.children[0])]=None
+				if diccionario[str(self.children[0])]:
+					repetidas.append(str(self.children[0]))
+				diccionario[str(self.children[0])]=__getVarType__(self)
+		return diccionario,repetidas,values
+
 	def calc_tipo(self, cola_dicc, cola_values):
 		#Vemos los hijos y sus tipos 
 		value_hijo=[]
@@ -319,6 +359,8 @@ class Node:
 						while cola_values:
 							valores=cola_values.popleft()
 							valores_aux.append(valores)
+						cola_dicc=diccionario_aux
+						cola_values=valores_aux
 			elif isinstance(self.children[i],int):
 				type_hijo.append("int")
 				value_hijo.append(self.children[i])
@@ -447,14 +489,14 @@ class Node:
 				if type_hijo[0]==type_hijo[1]:
 					self.tipo_var=type_hijo[0]
 				else:
-					errores_contexto.append("Error: operación sobre tipos incompatibles\
+					errores_contexto.append("Error: operación asignación sobre tipos incompatibles\
 								en la línea "+str(self.linea)+".")
 					return
 				
 				#EN EL ARRAY DE VALORES GLOBAL value_hijo[0] se reemplaza con el value_hijo[1]
 			
 			else:
-				errores_contexto.append("Error: operación sobre tipos de variables incompatibles\
+				errores_contexto.append("Error: operación asignación sobre tipos de variables incompatibles\
 										en la línea "+str(self.linea)+".")
 				return
 			
@@ -476,12 +518,12 @@ class Node:
 					if "negacion" in self.type:
 						self.value = not value_hijo[0]
 					else:
-						errores_contexto.append("Error: operación sobre tipos de variables incompatibles\
+						errores_contexto.append("Error: operación sobre tipo de variable incompatible\
 												en la línea "+str(self.linea)+".")
 						return
 
 				else:
-					errores_contexto.append("Error: operación sobre tipos de variables incompatibles\
+					errores_contexto.append("Error: operación sobre tipo de variable incompatible\
 											en la línea "+str(self.linea)+".")
 					return
 
@@ -534,15 +576,11 @@ def p_start(p):
 			 | TkWith TkBegin TkEnd
 			 | TkWith TkBegin cond TkEnd
 			 | TkBegin TkEnd'''
-	global diccionario, repetidas, values
+	global diccionario,repetidas,values
 	if len(p)>4:
-		lista_diccionarios.append(diccionario)
-		lista_repetidas.append(repetidas)
-		lista_values.append(values)
 		diccionario=OrderedDict()
 		repetidas=deque([])
 		values=OrderedDict()
-
 		if p[2] == "begin":
 			p[0] = p[3]
 		elif p[3] == "begin" and p[4]=="end":
@@ -550,11 +588,6 @@ def p_start(p):
 		else:
 			p[0] = Node('comienzo',[p[2],p[4]],None,p.lineno)
 	elif len(p)==4 and p[2] != "begin":
-		lista_diccionarios.append(diccionario)
-		lista_repetidas.append(repetidas)
-		diccionario=OrderedDict()
-		repetidas=deque([])
-
 		p[0] = p[2]
 	else:
 		p[0] = None
@@ -565,6 +598,7 @@ def p_declaracion_var(p):
 					  | TkVar declaracionArray
 					  | TkVar declaracionId declaracionVar
 					  | TkVar declaracionArray declaracionVar'''
+	global diccionario,repetidas,values
 	if len(p)>3:
 		p[0] = Node('secuencia_declaraciones',[p[2],p[3]],p[1],p.lineno)
 	else:
@@ -577,17 +611,18 @@ def p_declaracion_id(p):
 					 | declaracionIdNum
 					 | declaracionIdBool
 					 | declaracionIdChar'''
-	global diccionario, repetidas, values
+	global diccionario,repetidas,values
 	if len(p)>2:
 		if str(p[1]) in diccionario.keys():
 			repetidas.append(str(p[1]))
 		diccionario[str(p[1])]="id"
 		if len(p)>4:
+			print(str(p[1])+str(p[3]))
 			values[str(p[1])]=p[3]
+			p[0]=Node('secuencia_declaracionId',[p[1],p[3],p[5]],None,p.lineno)
 		else:
 			values[str(p[1])]=None
-
-		p[0]=Node('secuencia_declaracionId',[p[1],p[3]],None,p.lineno)
+			p[0]=Node('secuencia_declaracionId',[p[1],p[3]],None,p.lineno)
 	else:
 		p[0] = p[1]
 
@@ -595,13 +630,13 @@ def p_declaracion_id(p):
 def p_declaracion_idNum(p):
 	'''declaracionIdNum : TkId TkAsignacion exp TkDosPuntos TkInt
 						| TkId TkDosPuntos TkInt'''
-	global diccionario, repetidas,values
-
+	global diccionario,repetidas,values
 	if str(p[1]) in diccionario.keys():
 		repetidas.append(str(p[1]))
 	diccionario[str(p[1])]="int"
 	
 	if len(p)>4:
+		print(str(p[1])+str(p[3])+str(p[5]))
 		values[str(p[1])]=p[3]
 		Nodo = Node('asignacion',[p[1],p[3]],p[2],p.lineno)
 		if p[4]==",":
@@ -609,6 +644,7 @@ def p_declaracion_idNum(p):
 		else:
 			p[0]=Node('declaracionIdNum',[Nodo,p[5]],p[4],p.lineno)
 	else:
+		print(str(p[1])+str(p[3]))
 		values[str(p[1])]=None
 		p[0]=Node('declaracionIdNum',[p[1],p[3]],p[2],p.lineno)
 	
@@ -617,7 +653,7 @@ def p_declaracion_idNum(p):
 def p_declaracion_idChar(p):
 	'''declaracionIdChar : TkId TkAsignacion exp TkDosPuntos TkChar
 						 | TkId TkDosPuntos TkChar'''
-	global diccionario, repetidas, values
+	global diccionario,repetidas,values
 	if str(p[1]) in diccionario.keys():
 		repetidas.append(str(p[1]))
 	diccionario[str(p[1])]="char"
@@ -639,7 +675,7 @@ def p_declaracion_idChar(p):
 def p_declaracion_idBool(p):
 	'''declaracionIdBool : TkId TkAsignacion exp TkDosPuntos TkBool
 						 | TkId TkDosPuntos TkBool'''
-	global diccionario, repetidas, values
+	global diccionario,repetidas,values
 	if str(p[1]) in diccionario.keys():
 		repetidas.append(str(p[1]))
 	diccionario[str(p[1])]="bool"
@@ -659,13 +695,13 @@ def p_declaracion_idBool(p):
 #declaracion de arreglos
 def p_declaracion_array(p):
 	'''declaracionArray : TkId TkComa declaracionArray
-						| TkId TkDosPuntos TkArray TkCorcheteAbre TkNum TkCorcheteCierra TkOf type'''
-	global diccionario, repetidas, values
+						| TkId TkDosPuntos TkArray TkCorcheteAbre TkNum TkCorcheteCierra type2'''
+	global diccionario,repetidas,values
 	if str(p[1]) in diccionario.keys():
 		repetidas.append(str(p[1]))
-	diccionario[str(p[1])]="array-"+str(p[8])
 	
 	if len(p)>4:
+		diccionario[str(p[1])]="array-"+str(p[8])
 		string="["		
 		for i in range(p[5]):
 			string=string+"None,"
@@ -674,6 +710,7 @@ def p_declaracion_array(p):
 		values[str(p[1])]=string
 		p[0]=Node('declaracionArray',[p[1],p[5],p[8]],p[3],p.lineno)
 	else:
+		diccionario[str(p[1])]="array-" + p[1]
 		values[str(p[1])]="array"
 		p[0]=Node('secuencia_declaracionArray',[p[1],p[3]],None,p.lineno)
 	
@@ -725,11 +762,12 @@ def p_cond(p):
 			| TkWith TkBegin cond TkEnd 
 			| TkWith TkBegin TkEnd 
 			| TkBegin cond TkEnd 
+			| TkBegin cond TkEnd cond
 			| TkId TkAsignacion exp TkPuntoComa
 			| TkId TkAsignacion exp TkPuntoComa cond
 			| TkId ingresarEnArreglo TkAsignacion exp TkPuntoComa
 			| TkId ingresarEnArreglo TkAsignacion exp TkPuntoComa cond'''
-	global diccionario, repetidas, values
+	global diccionario,repetidas,values
 	if p[1]=="with":
 		#Se crea un nuevo diccionario
 		lista_diccionarios.append(diccionario)
@@ -738,19 +776,27 @@ def p_cond(p):
 		diccionario=OrderedDict()
 		repetidas=deque([])
 		values=OrderedDict()
-
 		if p[2] == "begin":
 			if p[3] == "end":
 				p[0] = None
 			else:
 				p[0] = p[3]
 		else:
-			Nodo = Node('beginInterno',[p[2],p[4]],p[3],p.lineno)
+			if p[4]=="end":
+				Nodo = Node('beginInterno',[p[2]],p[3],p.lineno)
+			else:
+				Nodo = Node('beginInterno',[p[2],p[4]],p[3],p.lineno)
 			if len(p)>6:
 				p[0] = Node('secuencia',[Nodo,p[6]],None,p.lineno)
 			else:
 				p[0] = Nodo
-	elif len(p)>4 and p[1]!="with":
+	elif p[1]=="begin":
+		if len(p)==4:
+			p[0] = p[2]
+		else:
+			Nodo = Node('beginInterno',[p[2]],p[3],p.lineno)
+			p[0] = Node('secuencia',[Nodo,p[4]],None,p.lineno)
+	elif len(p)>4 and p[1]!="with" and p[1]!="begin":
 		if p[4]==";":
 			Nodo = Node('asignacion',[p[1],p[3]],p[2],p.lineno)
 			if len(p)>5:
@@ -912,8 +958,12 @@ def buildtree(node):
 			sting+=", hoja: "+node.leaf
 		i=0
 		for child in node.children:
-			sting+=", hijo "+str(i)+" "+buildtree(child)+""
+			sting+=", hijo"+str(i)+"="+buildtree(child)+""
 			i=i+1
+		if node.value:
+			sting+=", value="+str(node.value)
+		if node.tipo_var:
+			sting+=", tipo_resultante="+node.tipo_var
 		sting+=")\n"
 		
 	else:
@@ -1169,11 +1219,20 @@ def redeclaracion():
 	for lista in lista_repetidas:
 		while lista:
 			igual=str(lista.popleft())
-			errores_contexto.append("Error: redeclaración de variable "+igual+" en el bloque interno with "+str(i)+".")
-			i=i+1
-			return
+			errores_contexto.append("Error: redeclaración de variable "+igual+" en el bloque interno de declaraciones No. "+str(i)+".")
+		i=i+1
+		return
 	return
 
+def decorateTree(node):
+	if node==None:
+		return
+	if isinstance(node,Node):
+		if len(node.children)!=0:
+			for child in node.children:
+				if isinstance(node,Node):
+					decorateTree(child)		
+		node.calc_tipo(lista_diccionarios,lista_values)
 lexer.lineno=1
 
 yacc.yacc()
@@ -1187,6 +1246,8 @@ if print_tokens_or_errors()==0: ####Falta formato de errores
 			print(p)
 		else:
 			print(p)
+			print(lista_diccionarios)
+			print(lista_values)
 			for diccionario in lista_diccionarios:
 				lista=list(diccionario.keys())
 				for i in range(len(lista)):
@@ -1204,8 +1265,15 @@ if print_tokens_or_errors()==0: ####Falta formato de errores
 						prev=lista[i-1]
 						valor[key]=valor[prev]
 				print(valor)
-			
-			redeclaracion()
+			#redeclaracion()
+			if "declaracion" in y.children[0].type:
+				y.children[0].adjuntarTablaSimbolos()
+				# if len(y.children)>1:
+				# 	decorateTree(y.children[1])
+			# else:
+			# 	decorateTree(y)
+			# p = buildtree(y)
+			# print(p)
 			if len(errores_contexto)!=0:
 				for error in errores_contexto:
 					print(error)
