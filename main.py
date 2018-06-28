@@ -353,7 +353,7 @@ class Node:
 									diccionario[str(node.children[0])]="int"
 								elif node.children[1] in ['true','false']:
 									diccionario[str(node.children[0])]="bool"
-								elif node.children[1] in 'abcdefghijklmnopqrstuvwxyz' and len(node.children[1])==1:
+								else:
 									diccionario[str(node.children[0])]="char"
 		print("salio")
 		print(diccionario)
@@ -1277,11 +1277,15 @@ def decorateTree(node):
 	if node==None:
 		return
 	if isinstance(node,Node):
+		if "declaracion" in node.type:
+			node.adjuntarTablaSimbolos()
+			return
 		if len(node.children)!=0:
 			for child in node.children:
 				if isinstance(node,Node):
 					decorateTree(child)		
-		node.calc_tipo(lista_diccionarios,lista_values)
+		else:
+			node.calc_tipo(lista_diccionarios,lista_values)
 lexer.lineno=1
 
 yacc.yacc()

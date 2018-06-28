@@ -1,7 +1,7 @@
 
 with
     var x <- 4, y<-9 : int
-    var m, p <- 'p' : char
+    var m, p <- 'p', s : char
     var a : int
 begin
     with
