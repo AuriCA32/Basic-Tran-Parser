@@ -263,7 +263,7 @@ lista_values_aux=deque([])
 
 def __getVarType__(node):
 	if isinstance(node,Node) and "declaracion" in node.type:
-		return __getVarType__(node.children(len(node.children)-1))
+		return __getVarType__(node.children[len(node.children)-1])
 	else:
 		return node
 
@@ -290,25 +290,74 @@ class Node:
 		lista_values_aux.append(values)
 
 	def __recorrerDeclaraciones__(self,diccionario,repetidas,values):	
+		print("entro")
+		print(diccionario)
+		print(values)
 		if self==None:
 			return diccionario,repetidas,values
 		if isinstance(self,Node):
+			print(self.type)
+			print(self.children)
 			if "declaracion" in self.type:
+				print("Declaracion en tipo")
 				for child in self.children:
 					if isinstance(child,Node) and "declaracion" in child.type:
 						diccionario,repetidas,values = child.__recorrerDeclaraciones__(diccionario,repetidas,values)
-					if "asignacion" in self.type:
+					if isinstance(child,Node) and "asignacion" in self.type:
+						print("asignacion en algun tipo de algun hijo")
 						values[str(child.children[0])]=str(child.children[1])
-						if diccionario[str(child.children[0])]:
+						if str(child.children[0]) in diccionario.keys():
 							repetidas.append(str(child.children[0]))
 						diccionario[str(child.children[0])]=__getVarType__(self)
 				if len(self.children)==3:
-					values[str(self.children[0])]=str(self.children[1])
+					print("longitud de arreglo de hijos igual a 3")
+					if isinstance(self.children[1],Node):
+						print("el segundo hijo es un nodo, es una expresion larga")
+						decorateTree(self.children[1])
+						y = buildtree(self.children[1])
+						print(y)
+						values[str(self.children[0])]=str(self.children[1].value)
+					else:
+						print("el segundo nodo es un terminal")
+						values[str(self.children[0])]=str(self.children[1])
+					if str(self.children[0]) in diccionario.keys():
+						repetidas.append(str(self.children[0]))
+					diccionario[str(self.children[0])]=__getVarType__(self.children[2])
 				else:
-					values[str(self.children[0])]=None
-				if diccionario[str(self.children[0])]:
-					repetidas.append(str(self.children[0]))
-				diccionario[str(self.children[0])]=__getVarType__(self)
+					print("longitud de arreglo de hijos diferente a 3")
+					if not isinstance(self.children[0],Node):
+						print("el hijo izq no es un nodo")
+						values[str(self.children[0])]=None
+						if str(self.children[0]) in diccionario.keys():
+							repetidas.append(str(self.children[0]))
+						diccionario[str(self.children[0])]=__getVarType__(self.children[1])
+					else:
+						print("el hijo izq es un nodo")
+						if "asignacion" in self.children[0].type:
+							print("el hijo izquierdo es una asignacion")
+							node = self.children[0]
+							print("se decora el mini arbol de asignacion")
+							decorateTree(node)
+							p=buildtree(node)
+							print(p)
+							if str(node.children[0]) in diccionario.keys():
+								repetidas.append(str(node.children[0]))
+							if isinstance(node.children[1],Node):
+								print("el hijo derecho de la asignacion es un arbol")
+								values[str(node.children[0])]=str(node.children[1].value)
+								diccionario[str(node.children[0])]=node.children[1].tipo_var
+							else:
+								print("el hijo derecho de la asignacion es un terminal")
+								values[str(node.children[0])]=str(node.children[1])
+								if isinstance(node.children[1],int):
+									diccionario[str(node.children[0])]="int"
+								elif node.children[1] in ['true','false']:
+									diccionario[str(node.children[0])]="bool"
+								elif node.children[1] in 'abcdefghijklmnopqrstuvwxyz' and len(node.children[1])==1:
+									diccionario[str(node.children[0])]="char"
+		print("salio")
+		print(diccionario)
+		print(values)
 		return diccionario,repetidas,values
 
 	def calc_tipo(self, cola_dicc, cola_values):
