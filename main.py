@@ -1284,8 +1284,8 @@ def decorateTree(node):
 			for child in node.children:
 				if isinstance(node,Node):
 					decorateTree(child)		
-		else:
-			node.calc_tipo(lista_diccionarios,lista_values)
+		#else:
+			#node.calc_tipo(lista_diccionarios,lista_values)
 lexer.lineno=1
 
 yacc.yacc()
@@ -1319,10 +1319,10 @@ if print_tokens_or_errors()==0: ####Falta formato de errores
 						valor[key]=valor[prev]
 				print(valor)
 			#redeclaracion()
-			if "declaracion" in y.children[0].type:
-				y.children[0].adjuntarTablaSimbolos()
-				# if len(y.children)>1:
-				# 	decorateTree(y.children[1])
+			decorateTree(y)
+			print(lista_diccionarios_aux)
+			print(lista_values_aux)
+			print(lista_repetidas_aux)
 			# else:
 			# 	decorateTree(y)
 			# p = buildtree(y)
