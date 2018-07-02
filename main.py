@@ -260,12 +260,39 @@ values=OrderedDict()
 lista_repetidas_aux=deque([])
 lista_diccionarios_aux=deque([])
 lista_values_aux=deque([])
+altura = 0
 
 def __getVarType__(node):
 	if isinstance(node,Node) and "declaracion" in node.type:
 		return __getVarType__(node.children[len(node.children)-1])
 	else:
 		return node
+
+def __getListArrayType__(node):
+	types = []
+	if isinstance(node,Node):
+		y = buildtree(node)
+		print(y)
+		types.append(node.children[len(node.children)-2])
+		temp = __getListArrayType__(node.children[len(node.children)-1])
+		for i in temp:
+			types.append(i)
+	else:
+		print(node)
+		types.append(node)
+	print(types)
+	return types
+		
+def __getArrayTypeString__(node):
+	types = __getListArrayType__(node)
+	print(types)
+	string=""
+	for i in types:
+		if isinstance(i,int):
+			string+="["+str(i)+"]"
+		else:
+			string+="("+i+")"
+	return string
 
 #Crea el arbol
 class Node:
@@ -313,16 +340,22 @@ class Node:
 					print("longitud de arreglo de hijos igual a 3")
 					if isinstance(self.children[1],Node):
 						print("el segundo hijo es un nodo, es una expresion larga")
-						decorateTree(self.children[1])
+						decorateTreeDeclaracion(self.children[1])
 						y = buildtree(self.children[1])
 						print(y)
 						values[str(self.children[0])]=str(self.children[1].value)
 					else:
 						print("el segundo nodo es un terminal")
-						values[str(self.children[0])]=str(self.children[1])
+						if "declaracionArray" in self.type:
+							values[str(self.children[0])]="None"
+						else:
+							values[str(self.children[0])]=str(self.children[1])
 					if str(self.children[0]) in diccionario.keys():
 						repetidas.append(str(self.children[0]))
-					diccionario[str(self.children[0])]=__getVarType__(self.children[2])
+					if "declaracionArray" in self.type:
+						diccionario[str(self.children[0])]="array"+__getArrayTypeString__(self)
+					else:
+						diccionario[str(self.children[0])]=__getVarType__(self.children[2])
 				else:
 					print("longitud de arreglo de hijos diferente a 3")
 					if not isinstance(self.children[0],Node):
@@ -337,7 +370,7 @@ class Node:
 							print("el hijo izquierdo es una asignacion")
 							node = self.children[0]
 							print("se decora el mini arbol de asignacion")
-							decorateTree(node)
+							decorateTreeDeclaracion(node)
 							p=buildtree(node)
 							print(p)
 							if str(node.children[0]) in diccionario.keys():
@@ -360,10 +393,17 @@ class Node:
 		print(values)
 		return diccionario,repetidas,values
 
-	def calc_tipo(self, cola_dicc, cola_values):
+	def calc_tipo(self,isDeclaracion):
 		#Vemos los hijos y sus tipos 
+		print("calc type del nodo "+self.type)
+		diccionario_aux=deque([])
+		valores_aux=deque([])
 		value_hijo=[]
 		type_hijo=[]
+		diccionario1 = None
+		valores1 = None
+		diccionario2 = None
+		valores2 = None
 		cola_aux=deque([])
 		i=0
 		for i in range(len(self.children)): #Es 2 o 1
@@ -382,38 +422,65 @@ class Node:
 				elif ("\"" in self.children[i]) or ("\'" in self.children[i]):
 					value_hijo.append(self.children[i][1:-1])
 					type_hijo.append("char")
-				else: #Buscamos en la tabla de simbolos la variable 
-					declarada=False
-					diccionario_aux=[]
-					valores_aux=[]
-					while cola_dicc and cola_values:
-						diccionario=cola_dicc.popleft()
-						valores=cola_values.popleft()
-						diccionario_aux.append(diccionario)
-						valores_aux.append(valores)
-						if self.children[i] in diccionario: #Si esta en algun diccionario
-							type_hijo.append(diccionario[self.children[i]])
-							value_hijo.append(valores[self.children[i]])
-							declarada=True
-							break
-					#Si se vacia la cola y no fue declarada
-					if not cola_dicc and not declarada:#Error
-						errores_contexto.append("Error: variable "+self.children[i]+" no declarada.")
-						return
-					#Acomodo las colas si no se terminaron de vaciar
-					else:
-						while cola_dicc:
-							diccionario=cola_dicc.popleft()
+				else: 
+					if not isDeclaracion:
+						print("Buscando "+self.children[i] + "en el diccionario")
+						print(lista_diccionarios_aux)
+						#Buscamos en la tabla de simbolos la variable 
+						declarada=False
+						while lista_diccionarios_aux and lista_values_aux:
+							diccionario=lista_diccionarios_aux.pop()
+							valores=lista_values_aux.pop()
 							diccionario_aux.append(diccionario)
-						while cola_values:
-							valores=cola_values.popleft()
 							valores_aux.append(valores)
-						cola_dicc=diccionario_aux
-						cola_values=valores_aux
+							if str(self.children[i]) in diccionario.keys(): #Si esta en algun diccionario
+								type_hijo.append(diccionario[self.children[i]])
+								if diccionario[self.children[i]] == "int":
+									value_hijo.append(int(valores[self.children[i]]))
+								else:
+									value_hijo.append(valores[self.children[i]])
+								declarada=True
+								if diccionario!=None:
+									diccionario2=diccionario
+									valores2=valores
+								else:
+									diccionario1=diccionario
+									valores1=valores
+								break
+						print("var declarada " +str(declarada))
+						while diccionario_aux and valores_aux:
+							diccionario = diccionario_aux.pop()
+							valores=valores_aux.pop()
+							lista_diccionarios_aux.append(diccionario)
+							lista_values_aux.append(valores)
+						
+						diccionario=diccionario1
+						valores=valores1
+						#Si se vacia la cola y no fue declarada
+						if not lista_diccionarios_aux and not declarada:#Error
+							while diccionario_aux and valores_aux:
+								diccionario = diccionario_aux.pop()
+								valores=valores_aux.pop()
+								lista_diccionarios_aux.append(diccionario)
+								lista_values_aux.append(valores)
+							errores_contexto.append("Error: variable "+self.children[i]+" no declarada.")
+							return
 			elif isinstance(self.children[i],int):
 				type_hijo.append("int")
 				value_hijo.append(self.children[i])
 		
+		if "declaracionArray" in self.type:
+			while diccionario_aux and valores_aux:
+				diccionario = diccionario_aux.pop()
+				valores=valores_aux.pop()
+				lista_diccionarios_aux.append(diccionario)
+				lista_values_aux.append(valores)
+			return
+		print(self.type)
+		print("lista de values de los hijos")
+		print(value_hijo)
+		print("lista de tipos de los hijos")
+		print(type_hijo)
 		#Si el value de algun hijo es None, no se puede realizar la operacion
 		for hijo in value_hijo:
 			if hijo=="None":
@@ -422,8 +489,9 @@ class Node:
 				return
 		
 		if len(type_hijo)==2: #operaciones y arreglo sin shift
-			
+
 			if self.type in operacion:
+				print("aqui con " + self.type)
 				for hijo in type_hijo:
 					hijo.strip("array-")
 				
@@ -432,6 +500,11 @@ class Node:
 				else:
 					errores_contexto.append("Error: operación sobre tipos de variables incompatibles\
 											en la línea "+str(self.linea)+".")
+					while diccionario_aux and valores_aux:
+						diccionario = diccionario_aux.pop()
+						valores=valores_aux.pop()
+						lista_diccionarios_aux.append(diccionario)
+						lista_values_aux.append(valores)
 					return
 				######FALTA MODIFICAR EL DICCIONARIO GLOBAL DE VALORES
 				if self.tipo_var=="int":
@@ -478,8 +551,14 @@ class Node:
 						self.tipo_var = "bool"
 
 					else:
+						print("ERROR1")
 						errores_contexto.append("Error: operación sobre tipos de variables incompatibles\
 												en la línea "+str(self.linea)+".")
+						while diccionario_aux and valores_aux:
+							diccionario = diccionario_aux.pop()
+							valores=valores_aux.pop()
+							lista_diccionarios_aux.append(diccionario)
+							lista_values_aux.append(valores)
 						return
 
 				elif self.tipo_var=="bool":
@@ -496,13 +575,25 @@ class Node:
 						self.value = value_hijo[0]!=value_hijo[1]
 
 					else:
+						print("ERROR2")
 						errores_contexto.append("Error: operación sobre tipos de variables incompatibles\
 												en la línea "+str(self.linea)+".")
+						while diccionario_aux and valores_aux:
+							diccionario = diccionario_aux.pop()
+							valores=valores_aux.pop()
+							lista_diccionarios_aux.append(diccionario)
+							lista_values_aux.append(valores)
 						return
 
 				else:
+					print("ERROR3")
 					errores_contexto.append("Error: operación sobre tipos de variables incompatibles\
 											en la línea "+str(self.linea)+".")
+					while diccionario_aux and valores_aux:
+						diccionario = diccionario_aux.pop()
+						valores=valores_aux.pop()
+						lista_diccionarios_aux.append(diccionario)
+						lista_values_aux.append(valores)
 					return
 
 			elif self.type in arreglo and self.type!="shift":
@@ -512,10 +603,21 @@ class Node:
 					else:
 						errores_contexto.append("Error: operación sobre tipos de arreglos incompatibles\
 									en la línea "+str(self.linea)+".")
+						while diccionario_aux and valores_aux:
+							diccionario = diccionario_aux.pop()
+							valores=valores_aux.pop()
+							lista_diccionarios_aux.append(diccionario)
+							lista_values_aux.append(valores)
 						return
 				else:
+					print("ERROR4")
 					errores_contexto.append("Error: operación sobre tipos de variables incompatibles\
 									en la línea "+str(self.linea)+".")
+					while diccionario_aux and valores_aux:
+						diccionario = diccionario_aux.pop()
+						valores=valores_aux.pop()
+						lista_diccionarios_aux.append(diccionario)
+						lista_values_aux.append(valores)
 					return
 				
 				if "concatenacion" in self.type:
@@ -530,23 +632,59 @@ class Node:
 				elif self.type=="accederEnArreglo":
 					pass
 				else:
+					print("ERROR5")
 					errores_contexto.append("Error: operación sobre tipos de variables incompatibles\
 									en la línea "+str(self.linea)+".")
+					while diccionario_aux and valores_aux:
+						diccionario = diccionario_aux.pop()
+						valores=valores_aux.pop()
+						lista_diccionarios_aux.append(diccionario)
+						lista_values_aux.append(valores)
 					return
 
-			elif self.type=="asignacion":
-				if type_hijo[0]==type_hijo[1]:
-					self.tipo_var=type_hijo[0]
+			elif "asignacion" in self.type:
+				if not isDeclaracion and type_hijo[0]==type_hijo[1]:
+					self.tipo_var=type_hijo[1]
+					if isinstance(self.children[1],Node):
+						valores[str(self.children[0])]=str(self.children[1].value)
+					else:
+						if self.children[0]!=None and self.children[1]!=None:
+							valores[str(self.children[0])]=str(self.children[1])
+				elif isDeclaracion:
+					while diccionario_aux and valores_aux:
+						diccionario = diccionario_aux.pop()
+						valores=valores_aux.pop()
+						lista_diccionarios_aux.append(diccionario)
+						lista_values_aux.append(valores)
+					return
 				else:
 					errores_contexto.append("Error: operación asignación sobre tipos incompatibles\
 								en la línea "+str(self.linea)+".")
+					while diccionario_aux and valores_aux:
+						diccionario = diccionario_aux.pop()
+						valores=valores_aux.pop()
+						lista_diccionarios_aux.append(diccionario)
+						lista_values_aux.append(valores)
 					return
 				
 				#EN EL ARRAY DE VALORES GLOBAL value_hijo[0] se reemplaza con el value_hijo[1]
 			
+			elif self.type=="comienzo" or self.type=="secuencia":
+				while diccionario_aux and valores_aux:
+					diccionario = diccionario_aux.pop()
+					valores=valores_aux.pop()
+					lista_diccionarios_aux.append(diccionario)
+					lista_values_aux.append(valores)
+				return
 			else:
+				print("ERROR")
 				errores_contexto.append("Error: operación asignación sobre tipos de variables incompatibles\
 										en la línea "+str(self.linea)+".")
+				while diccionario_aux and valores_aux:
+					diccionario = diccionario_aux.pop()
+					valores=valores_aux.pop()
+					lista_diccionarios_aux.append(diccionario)
+					lista_values_aux.append(valores)
 				return
 			
 		elif len(type_hijo)==1: #shift, caracter, menosUnario, negacion
@@ -561,6 +699,11 @@ class Node:
 					else:
 						errores_contexto.append("Error: operación sobre tipo de variable incompatible\
 												en la línea "+str(self.linea)+".")
+						while diccionario_aux and valores_aux:
+							diccionario = diccionario_aux.pop()
+							valores=valores_aux.pop()
+							lista_diccionarios_aux.append(diccionario)
+							lista_values_aux.append(valores)
 						return
 
 				elif self.tipo_var=="bool":
@@ -569,11 +712,21 @@ class Node:
 					else:
 						errores_contexto.append("Error: operación sobre tipo de variable incompatible\
 												en la línea "+str(self.linea)+".")
+						while diccionario_aux and valores_aux:
+							diccionario = diccionario_aux.pop()
+							valores=valores_aux.pop()
+							lista_diccionarios_aux.append(diccionario)
+							lista_values_aux.append(valores)
 						return
 
 				else:
 					errores_contexto.append("Error: operación sobre tipo de variable incompatible\
 											en la línea "+str(self.linea)+".")
+					while diccionario_aux and valores_aux:
+						diccionario = diccionario_aux.pop()
+						valores=valores_aux.pop()
+						lista_diccionarios_aux.append(diccionario)
+						lista_values_aux.append(valores)
 					return
 
 			elif self.type=="shift":
@@ -582,6 +735,11 @@ class Node:
 				else:
 					errores_contexto.append("Error: operación sobre tipo de variable incompatible\
 									en la línea "+str(self.linea)+".")
+					while diccionario_aux and valores_aux:
+						diccionario = diccionario_aux.pop()
+						valores=valores_aux.pop()
+						lista_diccionarios_aux.append(diccionario)
+						lista_values_aux.append(valores)
 					return
 
 				##HACERLE SHIFT AL ARREGLO EN value_hijos[0]
@@ -594,6 +752,11 @@ class Node:
 				else:
 					errores_contexto.append("Error: operación sobre tipo de variable incompatible\
 										en la línea "+str(self.linea)+".")
+					while diccionario_aux and valores_aux:
+						diccionario = diccionario_aux.pop()
+						valores=valores_aux.pop()
+						lista_diccionarios_aux.append(diccionario)
+						lista_values_aux.append(valores)
 					return
 
 				if self.tipo_var=="char":
@@ -606,12 +769,32 @@ class Node:
 				else:
 					errores_contexto.append("Error: operación sobre tipo de variable incompatible\
 										en la línea "+str(self.linea)+".")
+					while diccionario_aux and valores_aux:
+						diccionario = diccionario_aux.pop()
+						valores=valores_aux.pop()
+						lista_diccionarios_aux.append(diccionario)
+						lista_values_aux.append(valores)
 					return
 
 			else:
+				if isDeclaracion:
+					return
+				print("ERROR6")
 				errores_contexto.append("Error: operación sobre tipos de variables incompatibles\
 										en la línea "+str(self.linea)+".")
+				while diccionario_aux and valores_aux:
+					diccionario = diccionario_aux.pop()
+					valores=valores_aux.pop()
+					lista_diccionarios_aux.append(diccionario)
+					lista_values_aux.append(valores)
 				return
+		while diccionario_aux and valores_aux:
+			diccionario = diccionario_aux.pop()
+			valores=valores_aux.pop()
+			lista_diccionarios_aux.append(diccionario)
+			lista_values_aux.append(valores)
+		print(lista_diccionarios_aux)
+		print(lista_values_aux)
 		return
 
 def p_program(p):
@@ -625,17 +808,13 @@ def p_start(p):
 			 | TkWith TkBegin TkEnd
 			 | TkWith TkBegin cond TkEnd
 			 | TkBegin TkEnd'''
-	global diccionario,repetidas,values
 	if len(p)>4:
-		diccionario=OrderedDict()
-		repetidas=deque([])
-		values=OrderedDict()
 		if p[2] == "begin":
 			p[0] = p[3]
 		elif p[3] == "begin" and p[4]=="end":
-			p[0] = Node('comienzo',[p[2]],None,p.lineno)
+			p[0] = Node('comienzo',[p[2]],None,p.lineno(3))
 		else:
-			p[0] = Node('comienzo',[p[2],p[4]],None,p.lineno)
+			p[0] = Node('comienzo',[p[2],p[4]],None,p.lineno(3))
 	elif len(p)==4 and p[2] != "begin":
 		p[0] = p[2]
 	else:
@@ -647,9 +826,8 @@ def p_declaracion_var(p):
 					  | TkVar declaracionArray
 					  | TkVar declaracionId declaracionVar
 					  | TkVar declaracionArray declaracionVar'''
-	global diccionario,repetidas,values
 	if len(p)>3:
-		p[0] = Node('secuencia_declaraciones',[p[2],p[3]],p[1],p.lineno)
+		p[0] = Node('secuencia_declaraciones',[p[2],p[3]],p[1],p.lineno(1))
 	else:
 		p[0] = p[2]
 
@@ -660,18 +838,11 @@ def p_declaracion_id(p):
 					 | declaracionIdNum
 					 | declaracionIdBool
 					 | declaracionIdChar'''
-	global diccionario,repetidas,values
 	if len(p)>2:
-		if str(p[1]) in diccionario.keys():
-			repetidas.append(str(p[1]))
-		diccionario[str(p[1])]="id"
 		if len(p)>4:
-			print(str(p[1])+str(p[3]))
-			values[str(p[1])]=p[3]
-			p[0]=Node('secuencia_declaracionId',[p[1],p[3],p[5]],None,p.lineno)
+			p[0]=Node('secuencia_declaracionId',[p[1],p[3],p[5]],None,p.lineno(1))
 		else:
-			values[str(p[1])]=None
-			p[0]=Node('secuencia_declaracionId',[p[1],p[3]],None,p.lineno)
+			p[0]=Node('secuencia_declaracionId',[p[1],p[3]],None,p.lineno(1))
 	else:
 		p[0] = p[1]
 
@@ -679,96 +850,60 @@ def p_declaracion_id(p):
 def p_declaracion_idNum(p):
 	'''declaracionIdNum : TkId TkAsignacion exp TkDosPuntos TkInt
 						| TkId TkDosPuntos TkInt'''
-	global diccionario,repetidas,values
-	if str(p[1]) in diccionario.keys():
-		repetidas.append(str(p[1]))
-	diccionario[str(p[1])]="int"
-	
 	if len(p)>4:
-		print(str(p[1])+str(p[3])+str(p[5]))
-		values[str(p[1])]=p[3]
-		Nodo = Node('asignacion',[p[1],p[3]],p[2],p.lineno)
+		Nodo = Node('asignacion',[p[1],p[3]],p[2],p.lineno(2))
 		if p[4]==",":
-			p[0]=Node('secuencia_declaracionIdNum',[Nodo,p[5]],None,p.lineno)   ######REVISAR
+			p[0]=Node('secuencia_declaracionIdNum',[Nodo,p[5]],None,p.lineno(1))   ######REVISAR
 		else:
-			p[0]=Node('declaracionIdNum',[Nodo,p[5]],p[4],p.lineno)
+			p[0]=Node('declaracionIdNum',[Nodo,p[5]],p[4],p.lineno(5))
 	else:
-		print(str(p[1])+str(p[3]))
-		values[str(p[1])]=None
-		p[0]=Node('declaracionIdNum',[p[1],p[3]],p[2],p.lineno)
+		p[0]=Node('declaracionIdNum',[p[1],p[3]],p[2],p.lineno(3))
 	
 
 #declaracion de id tipo char
 def p_declaracion_idChar(p):
 	'''declaracionIdChar : TkId TkAsignacion exp TkDosPuntos TkChar
 						 | TkId TkDosPuntos TkChar'''
-	global diccionario,repetidas,values
-	if str(p[1]) in diccionario.keys():
-		repetidas.append(str(p[1]))
-	diccionario[str(p[1])]="char"
-
 	if len(p)>4:
-		values[str(p[1])]=p[3]
-		Nodo = Node('asignacion',[p[1],p[3]],p[2],p.lineno)
+		Nodo = Node('asignacion',[p[1],p[3]],p[2],p.lineno(2))
 		if p[4]==",":
-			p[0]=Node('secuencia_declaracionIdChar',[Nodo,p[5]],None,p.lineno)   ######REVISAR
+			p[0]=Node('secuencia_declaracionIdChar',[Nodo,p[5]],None,p.lineno(1))   ######REVISAR
 		else:
-			p[0]=Node('declaracionIdChar',[Nodo,p[5]],p[4],p.lineno)
+			p[0]=Node('declaracionIdChar',[Nodo,p[5]],p[4],p.lineno(5))
 	
 	else:
-		values[str(p[1])]=None
-		p[0]=Node('declaracionIdChar',[p[1],p[3]],p[2],p.lineno)
+		p[0]=Node('declaracionIdChar',[p[1],p[3]],p[2],p.lineno(3))
 	
 
 #declaracion de id tipo bool
 def p_declaracion_idBool(p):
 	'''declaracionIdBool : TkId TkAsignacion exp TkDosPuntos TkBool
 						 | TkId TkDosPuntos TkBool'''
-	global diccionario,repetidas,values
-	if str(p[1]) in diccionario.keys():
-		repetidas.append(str(p[1]))
-	diccionario[str(p[1])]="bool"
-
 	if len(p)>4:
-		values[str(p[1])]=p[3]
-		Nodo = Node('asignacion',[p[1],p[3]],p[2],p.lineno)
+		Nodo = Node('asignacion',[p[1],p[3]],p[2],p.lineno(2))
 		if p[4]==",":
-			p[0]=Node('secuencia_declaracionIdBool',[Nodo,p[5]],None,p.lineno)   ######REVISAR
+			p[0]=Node('secuencia_declaracionIdBool',[Nodo,p[5]],None,p.lineno(1))   ######REVISAR
 		else:
-			p[0]=Node('declaracionIdBool',[Nodo,p[5]],p[4],p.lineno)
+			p[0]=Node('declaracionIdBool',[Nodo,p[5]],p[4],p.lineno(5))
 	else:
-		values[str(p[1])]=None
-		p[0]=Node('declaracionIdBool',[p[1],p[3]],p[2],p.lineno)
+		p[0]=Node('declaracionIdBool',[p[1],p[3]],p[2],p.lineno(3))
 	
 
 #declaracion de arreglos
 def p_declaracion_array(p):
 	'''declaracionArray : TkId TkComa declaracionArray
 						| TkId TkDosPuntos TkArray TkCorcheteAbre TkNum TkCorcheteCierra type2'''
-	global diccionario,repetidas,values
-	if str(p[1]) in diccionario.keys():
-		repetidas.append(str(p[1]))
-	
 	if len(p)>4:
-		diccionario[str(p[1])]="array-"+str(p[8])
-		string="["		
-		for i in range(p[5]):
-			string=string+"None,"
-		string=string[:-1]
-		string=string+"]"
-		values[str(p[1])]=string
-		p[0]=Node('declaracionArray',[p[1],p[5],p[8]],p[3],p.lineno)
+		p[0]=Node('declaracionArray',[p[1],p[5],p[7]],p[3],p.lineno(1))
 	else:
-		diccionario[str(p[1])]="array-" + p[1]
-		values[str(p[1])]="array"
-		p[0]=Node('secuencia_declaracionArray',[p[1],p[3]],None,p.lineno)
+		p[0]=Node('secuencia_declaracionArray',[p[1],p[3]],None,p.lineno(2))
 	
 
 def p_type2(p):
-	'''type2 : TkOf TkArray TkCorcheteAbre exp TkCorcheteCierra  type2
+	'''type2 : TkOf TkArray TkCorcheteAbre exp TkCorcheteCierra type2
 			 | TkOf type'''
 	if len(p)>3:
-		p[0] = Node('arrayInterno',[p[4],p[6]],p[1])
+		p[0] = Node('arrayInterno',[p[4],p[6]],p[1],p.lineno(1))
 	else:
 		p[0] = p[2]
 
@@ -782,7 +917,7 @@ def p_arrayaux(p):
 	'''arrayaux : TkNum
 				| TkNum TkComa TkNum'''
 	if len(p)>2:
-		p[0] = Node('rangoArreglo',[p[1],p[3]],p[2],p.lineno)
+		p[0] = Node('rangoArreglo',[p[1],p[3]],p[2],p.lineno(1))
 	else:
 		p[0] = p[1]
 
@@ -790,7 +925,7 @@ def p_ingresarEnArreglo(p):
 	'''ingresarEnArreglo : TkCorcheteAbre arrayaux TkCorcheteCierra ingresarEnArreglo
 						 | TkCorcheteAbre arrayaux TkCorcheteCierra'''
 	if len(p)>4:
-		p[0] = Node('secuencia-accederEnArreglo',[p[2],p[4]],None,p.lineno)
+		p[0] = Node('secuencia-accederEnArreglo',[p[2],p[4]],None,p.lineno(1))
 	else:
 		p[0] = p[2]
 	
@@ -816,15 +951,7 @@ def p_cond(p):
 			| TkId TkAsignacion exp TkPuntoComa cond
 			| TkId ingresarEnArreglo TkAsignacion exp TkPuntoComa
 			| TkId ingresarEnArreglo TkAsignacion exp TkPuntoComa cond'''
-	global diccionario,repetidas,values
 	if p[1]=="with":
-		#Se crea un nuevo diccionario
-		lista_diccionarios.append(diccionario)
-		lista_repetidas.append(repetidas)
-		lista_values.append(values)
-		diccionario=OrderedDict()
-		repetidas=deque([])
-		values=OrderedDict()
 		if p[2] == "begin":
 			if p[3] == "end":
 				p[0] = None
@@ -832,36 +959,36 @@ def p_cond(p):
 				p[0] = p[3]
 		else:
 			if p[4]=="end":
-				Nodo = Node('beginInterno',[p[2]],p[3],p.lineno)
+				Nodo = Node('beginInterno',[p[2]],p[3],p.lineno(1))
 			else:
-				Nodo = Node('beginInterno',[p[2],p[4]],p[3],p.lineno)
+				Nodo = Node('beginInterno',[p[2],p[4]],p[3],p.lineno(1))
 			if len(p)>6:
-				p[0] = Node('secuencia',[Nodo,p[6]],None,p.lineno)
+				p[0] = Node('secuencia',[Nodo,p[6]],None,p.lineno(1))
 			else:
 				p[0] = Nodo
 	elif p[1]=="begin":
 		if len(p)==4:
 			p[0] = p[2]
 		else:
-			Nodo = Node('beginInterno',[p[2]],p[3],p.lineno)
-			p[0] = Node('secuencia',[Nodo,p[4]],None,p.lineno)
+			Nodo = Node('beginInterno',[p[2]],p[3],p.lineno(1))
+			p[0] = Node('secuencia',[Nodo,p[4]],None,p.lineno(1))
 	elif len(p)>4 and p[1]!="with" and p[1]!="begin":
 		if p[4]==";":
-			Nodo = Node('asignacion',[p[1],p[3]],p[2],p.lineno)
+			Nodo = Node('asignacion',[p[1],p[3]],p[2],p.lineno(2))
 			if len(p)>5:
-				p[0] = Node('secuencia',[Nodo,p[5]],None,p.lineno)
+				p[0] = Node('secuencia',[Nodo,p[5]],None,p.lineno(1))
 			else:
 				p[0] = Nodo
 		elif p[5]==";":
-			NodoInterno = Node('accederEnArreglo',[p[1],p[2]],"[",p.lineno)
-			Nodo = Node('asignacion',[NodoInterno,p[4]],p[3],p.lineno)
+			NodoInterno = Node('accederEnArreglo',[p[1],p[2]],"[",p.lineno(3))
+			Nodo = Node('asignacion',[NodoInterno,p[4]],p[3],p.lineno(2))
 			if len(p)>8:
-				p[0] = Node('secuencia',[Nodo,p[6]],None,p.lineno)
+				p[0] = Node('secuencia',[Nodo,p[6]],None,p.lineno(1))
 			else:
 				p[0] = Nodo
 	else:
 		if len(p)>2:
-			p[0] = Node('secuencia',[p[1],p[2]],None,p.lineno)
+			p[0] = Node('secuencia',[p[1],p[2]],None,p.lineno(1))
 		else:
 			p[0] = p[1]
 
@@ -869,29 +996,29 @@ def p_if(p):
 	'''if : TkIf operacion TkHacer cond TkOtherwise TkHacer cond TkEnd
 		  | TkIf operacion TkHacer cond TkEnd'''
 	if len(p)>6:
-		p[0] = Node('condicional_otherwise',[p[2],p[4],p[7]],p[1],p.lineno)
+		p[0] = Node('condicional_otherwise',[p[2],p[4],p[7]],p[1],p.lineno(1))
 	else:
-		p[0] = Node('condicional',[p[2],p[4]],p[1],p.lineno)
+		p[0] = Node('condicional',[p[2],p[4]],p[1],p.lineno(1))
 
 def p_while(p):
 	'''while : TkWhile operacion TkHacer cond TkEnd'''
-	p[0] = Node('while',[p[2],p[4]],p[1],p.lineno)
+	p[0] = Node('while',[p[2],p[4]],p[1],p.lineno(1))
 
 def p_for(p):
 	'''for : TkFor TkId TkFrom exp TkTo exp TkStep TkNum TkHacer cond TkEnd
 		   | TkFor TkId TkFrom exp TkTo exp TkHacer cond TkEnd'''
 	if len(p)>10:
-		p[0] = Node('for_step',[p[2],p[4],p[6],p[8],p[10]],p[1],p.lineno)
+		p[0] = Node('for_step',[p[2],p[4],p[6],p[8],p[10]],p[1],p.lineno(1))
 	else:
-		p[0] = Node('for',[p[2],p[4],p[6],p[8]],p[1],p.lineno)
+		p[0] = Node('for',[p[2],p[4],p[6],p[8]],p[1],p.lineno(1))
 
 def p_read(p):
 	'''read : TkRead TkId TkPuntoComa'''
-	p[0] = Node('read',[p[2]],p[1],p.lineno)
+	p[0] = Node('read',[p[2]],p[1],p.lineno(1))
 
 def p_print(p):
 	'''print : TkPrint exp TkPuntoComa'''
-	p[0] = Node('print',[p[2]],p[1],p.lineno)
+	p[0] = Node('print',[p[2]],p[1],p.lineno(1))
 
 def p_exp(p):
 	'''exp : operacion'''
@@ -932,50 +1059,50 @@ def p_operacion(p):
 		if p[1]=="(" and p[3]==")":
 			p[0] = p[2]
 		elif p[2]=="+":
-			p[0] = Node('operacion-suma',[p[1],p[3]],p[2],p.lineno)
+			p[0] = Node('operacion-suma',[p[1],p[3]],p[2],p.lineno(2))
 		elif p[2]=="-":
-			p[0] = Node('operacion-resta',[p[1],p[3]],p[2],p.lineno)
+			p[0] = Node('operacion-resta',[p[1],p[3]],p[2],p.lineno(2))
 		elif p[2]=="*":
-			p[0] = Node('operacion-multiplicacion',[p[1],p[3]],p[2],p.lineno)
+			p[0] = Node('operacion-multiplicacion',[p[1],p[3]],p[2],p.lineno(2))
 		elif p[2]=="/":
-			p[0] = Node('operacion-division',[p[1],p[3]],p[2],p.lineno)
+			p[0] = Node('operacion-division',[p[1],p[3]],p[2],p.lineno(2))
 		elif p[2]=="%":
-			p[0] = Node('operacion-modulo',[p[1],p[3]],p[2],p.lineno)
+			p[0] = Node('operacion-modulo',[p[1],p[3]],p[2],p.lineno(2))
 		elif p[2]==".":
-			p[0] = Node('operacion-punto',[p[1],p[3]],p[2],p.lineno)
+			p[0] = Node('operacion-punto',[p[1],p[3]],p[2],p.lineno(2))
 		elif p[2]=="/\\":
-			p[0] = Node('operacion-conjuncion',[p[1],p[3]],p[2],p.lineno)
+			p[0] = Node('operacion-conjuncion',[p[1],p[3]],p[2],p.lineno(2))
 		elif p[2]=="\\/":
-			p[0] = Node('operacion-disyuncion',[p[1],p[3]],p[2],p.lineno)
+			p[0] = Node('operacion-disyuncion',[p[1],p[3]],p[2],p.lineno(2))
 		elif p[2]=="=":
-			p[0] = Node('operacion-igual',[p[1],p[3]],p[2],p.lineno)
+			p[0] = Node('operacion-igual',[p[1],p[3]],p[2],p.lineno(2))
 		elif p[2]=="/=":
-			p[0] = Node('operacion-diferente',[p[1],p[3]],p[2],p.lineno)
+			p[0] = Node('operacion-diferente',[p[1],p[3]],p[2],p.lineno(2))
 		elif p[2]=="<":
-			p[0] = Node('operacion-menor',[p[1],p[3]],p[2],p.lineno)
+			p[0] = Node('operacion-menor',[p[1],p[3]],p[2],p.lineno(2))
 		elif p[2]=="<=":
-			p[0] = Node('operacion-menorIgual',[p[1],p[3]],p[2],p.lineno)
+			p[0] = Node('operacion-menorIgual',[p[1],p[3]],p[2],p.lineno(2))
 		elif p[2]==">":
-			p[0] = Node('operacion-mayor',[p[1],p[3]],p[2],p.lineno)
+			p[0] = Node('operacion-mayor',[p[1],p[3]],p[2],p.lineno(2))
 		elif p[2]==">=":
-			p[0] = Node('operacion-mayorIgual',[p[1],p[3]],p[2],p.lineno)
+			p[0] = Node('operacion-mayorIgual',[p[1],p[3]],p[2],p.lineno(2))
 		elif p[2]=="::":
-			p[0] = Node('concatenacion',[p[1],p[3]],p[2],p.lineno)
+			p[0] = Node('concatenacion',[p[1],p[3]],p[2],p.lineno(2))
 	elif len(p)==3:
 		if p[1]=="-":
-			p[0] = Node('operacion-menosUnario',[p[2]],p[1],p.lineno)
+			p[0] = Node('operacion-menosUnario',[p[2]],p[1],p.lineno(1))
 		if p[1]=="not":
-			p[0] = Node('operacion-negacion',[p[2]],p[1],p.lineno)
+			p[0] = Node('operacion-negacion',[p[2]],p[1],p.lineno(1))
 		elif p[2]=="++":
-			p[0] = Node('siguienteChar',[p[1]],p[2],p.lineno)
+			p[0] = Node('siguienteChar',[p[1]],p[2],p.lineno(1))
 		elif p[2]=="--":
-			p[0] = Node('anteriorChar',[p[1]],p[2],p.lineno)
+			p[0] = Node('anteriorChar',[p[1]],p[2],p.lineno(1))
 		elif p[1]=="\#":
-			p[0] = Node('valorAscii',[p[2]],p[1],p.lineno)
+			p[0] = Node('valorAscii',[p[2]],p[1],p.lineno(1))
 		elif p[1]=="$":
-			p[0] = Node('shift',[p[2]],p[1],p.lineno)
+			p[0] = Node('shift',[p[2]],p[1],p.lineno(1))
 		else:
-			p[0] = Node('accederEnArreglo',[p[1],p[2]],"[",p.lineno)
+			p[0] = Node('accederEnArreglo',[p[1],p[2]],"[",p.lineno(1))
 	else:
 		p[0] = p[1]
 
@@ -1263,29 +1390,45 @@ def print_tree(node,n):
 
 def redeclaracion():
 	#Busca en la cola por diccionario
-	global lista_repetidas
 	i=0
 	for lista in lista_repetidas:
 		while lista:
 			igual=str(lista.popleft())
-			errores_contexto.append("Error: redeclaración de variable "+igual+" en el bloque interno de declaraciones No. "+str(i)+".")
+			errores_contexto.append("Error: redeclaración de variable "+igual+" en el bloque de declaraciones No. "+str(i)+".")
 		i=i+1
-		return
-	return
 
 def decorateTree(node):
 	if node==None:
 		return
 	if isinstance(node,Node):
-		if "declaracion" in node.type:
-			node.adjuntarTablaSimbolos()
-			return
+		if len(node.children)!=0:
+			if len(node.children)==2 and isinstance(node.children[0],Node) and isinstance(node.children[1],Node) and "declaracion" in node.children[0].type and "declaracion" not in node.children[1].type:
+				print("creando tabla de simbolos")
+				node.children[0].adjuntarTablaSimbolos()
+				print("decorando el arbol")
+				decorateTree(node.children[1])
+				print("sacando el diccionario de este bloque with")
+				diccionario=lista_diccionarios_aux.pop()
+				lista_diccionarios.append(diccionario)
+				valores = lista_values_aux.pop()
+				lista_values.append(valores)
+			else:
+				for child in node.children:
+					decorateTree(child)		
+		node.calc_tipo(False)
+
+def decorateTreeDeclaracion(node):
+	if node==None:
+		return
+	if isinstance(node,Node):
+		print(node.type)
 		if len(node.children)!=0:
 			for child in node.children:
-				if isinstance(node,Node):
-					decorateTree(child)		
-		#else:
-			#node.calc_tipo(lista_diccionarios,lista_values)
+				decorateTreeDeclaracion(child)		
+		node.calc_tipo(True)
+	else:
+		print(node)
+
 lexer.lineno=1
 
 yacc.yacc()
@@ -1299,40 +1442,13 @@ if print_tokens_or_errors()==0: ####Falta formato de errores
 			print(p)
 		else:
 			print(p)
+			redeclaracion()
+			decorateTree(y)
 			print(lista_diccionarios)
 			print(lista_values)
-			for diccionario in lista_diccionarios:
-				lista=list(diccionario.keys())
-				for i in range(len(lista)):
-					key=lista[i]
-					if diccionario[key]=="id":
-						prev=lista[i-1]
-						diccionario[key]=diccionario[prev]
-				print(diccionario)
-
-			for valor in lista_values:
-				lista=list(valor.keys())
-				for i in range(len(lista)):
-					key=lista[i]
-					if valor[key]=="array":
-						prev=lista[i-1]
-						valor[key]=valor[prev]
-				print(valor)
-			#redeclaracion()
-			decorateTree(y)
-			print(lista_diccionarios_aux)
-			print(lista_values_aux)
 			print(lista_repetidas_aux)
-			# else:
-			# 	decorateTree(y)
-			# p = buildtree(y)
-			# print(p)
+			P = buildtree(y)
+			print(p)
 			if len(errores_contexto)!=0:
 				for error in errores_contexto:
 					print(error)
-			
-			#Prueba de funcion de tipos y valores
-			nodo=Node("valorAscii",["\'b\'"],None,1)
-			nodo.calc_tipo(lista_diccionarios,lista_values)
-			print(str(nodo.value))
-			print(str(nodo.tipo_var))

@@ -1,17 +1,11 @@
 
 with
-    var x <- 4, y<-9 : int
-    var m, p <- 'p', s : char
-    var a : int
+    var x <- 4+(6*2), y<-9 : int
+    var p : bool
 begin
-    with
-        var s: int
-    begin
-        with
-            var q : int
-        begin
-            a<-x+y;
-        end    
-        a<-x+y;
-    end
+    x<-4;
+    y<-0+8;
+    p <- true /\ true \/ false;
+    p <- a;
+    p <- x;
 end
