@@ -4,8 +4,13 @@ with
     var p : bool
 begin
     x<-4;
-    y<-0+8;
+    y<-6/2;
     p <- true /\ true \/ false;
-    p <- a;
-    p <- x;
+    p <- 2 <= 3;
+    with 
+        var x <- true : bool
+        var x : int
+    begin
+        p <- x;
+    end
 end

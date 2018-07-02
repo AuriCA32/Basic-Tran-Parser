@@ -334,7 +334,7 @@ class Node:
 						print("asignacion en algun tipo de algun hijo")
 						values[str(child.children[0])]=str(child.children[1])
 						if str(child.children[0]) in diccionario.keys():
-							repetidas.append(str(child.children[0]))
+							repetidas.append([str(child.children[0]),child.linea])
 						diccionario[str(child.children[0])]=__getVarType__(self)
 				if len(self.children)==3:
 					print("longitud de arreglo de hijos igual a 3")
@@ -351,7 +351,7 @@ class Node:
 						else:
 							values[str(self.children[0])]=str(self.children[1])
 					if str(self.children[0]) in diccionario.keys():
-						repetidas.append(str(self.children[0]))
+						repetidas.append([str(self.children[0]),self.linea])
 					if "declaracionArray" in self.type:
 						diccionario[str(self.children[0])]="array"+__getArrayTypeString__(self)
 					else:
@@ -362,7 +362,7 @@ class Node:
 						print("el hijo izq no es un nodo")
 						values[str(self.children[0])]=None
 						if str(self.children[0]) in diccionario.keys():
-							repetidas.append(str(self.children[0]))
+							repetidas.append([str(self.children[0]),self.linea])
 						diccionario[str(self.children[0])]=__getVarType__(self.children[1])
 					else:
 						print("el hijo izq es un nodo")
@@ -374,7 +374,7 @@ class Node:
 							p=buildtree(node)
 							print(p)
 							if str(node.children[0]) in diccionario.keys():
-								repetidas.append(str(node.children[0]))
+								repetidas.append([str(node.children[0]),self.linea])
 							if isinstance(node.children[1],Node):
 								print("el hijo derecho de la asignacion es un arbol")
 								values[str(node.children[0])]=str(node.children[1].value)
@@ -429,18 +429,24 @@ class Node:
 						#Buscamos en la tabla de simbolos la variable 
 						declarada=False
 						while lista_diccionarios_aux and lista_values_aux:
-							diccionario=lista_diccionarios_aux.pop()
-							valores=lista_values_aux.pop()
+							diccionario=lista_diccionarios_aux.popleft()
+							valores=lista_values_aux.popleft()
 							diccionario_aux.append(diccionario)
 							valores_aux.append(valores)
 							if str(self.children[i]) in diccionario.keys(): #Si esta en algun diccionario
 								type_hijo.append(diccionario[self.children[i]])
 								if diccionario[self.children[i]] == "int":
-									value_hijo.append(int(valores[self.children[i]]))
+									if not isDeclaracion:
+										try:
+											value_hijo.append(int(valores[self.children[i]]))
+										except:
+											value_hijo.append(str(valores[self.children[i]]))
+									else:
+										value_hijo.append("None")
 								else:
 									value_hijo.append(valores[self.children[i]])
 								declarada=True
-								if diccionario!=None:
+								if diccionario1!=None:
 									diccionario2=diccionario
 									valores2=valores
 								else:
@@ -449,18 +455,18 @@ class Node:
 								break
 						print("var declarada " +str(declarada))
 						while diccionario_aux and valores_aux:
-							diccionario = diccionario_aux.pop()
-							valores=valores_aux.pop()
+							diccionario = diccionario_aux.popleft()
+							valores=valores_aux.popleft()
 							lista_diccionarios_aux.append(diccionario)
 							lista_values_aux.append(valores)
 						
 						diccionario=diccionario1
 						valores=valores1
 						#Si se vacia la cola y no fue declarada
-						if not lista_diccionarios_aux and not declarada:#Error
+						if not declarada:#Error
 							while diccionario_aux and valores_aux:
-								diccionario = diccionario_aux.pop()
-								valores=valores_aux.pop()
+								diccionario = diccionario_aux.popleft()
+								valores=valores_aux.popleft()
 								lista_diccionarios_aux.append(diccionario)
 								lista_values_aux.append(valores)
 							errores_contexto.append("Error: variable "+self.children[i]+" no declarada.")
@@ -471,8 +477,8 @@ class Node:
 		
 		if "declaracionArray" in self.type:
 			while diccionario_aux and valores_aux:
-				diccionario = diccionario_aux.pop()
-				valores=valores_aux.pop()
+				diccionario = diccionario_aux.popleft()
+				valores=valores_aux.popleft()
 				lista_diccionarios_aux.append(diccionario)
 				lista_values_aux.append(valores)
 			return
@@ -484,8 +490,7 @@ class Node:
 		#Si el value de algun hijo es None, no se puede realizar la operacion
 		for hijo in value_hijo:
 			if hijo=="None":
-				errores_contexto.append("Error: No se puede realizar operación sobre variable con \
-										valor None en la línea "+str(self.linea)+".")
+				errores_contexto.append("Error: No se puede realizar la operación \""+self.type+"\" sobre variable con valor None en la línea "+str(self.linea)+".")
 				return
 		
 		if len(type_hijo)==2: #operaciones y arreglo sin shift
@@ -498,11 +503,10 @@ class Node:
 				if type_hijo[0]==type_hijo[1]:
 					self.tipo_var=type_hijo[0]
 				else:
-					errores_contexto.append("Error: operación sobre tipos de variables incompatibles\
-											en la línea "+str(self.linea)+".")
+					errores_contexto.append("Error: operación sobre tipos de variables incompatibles en la línea "+str(self.linea)+".")
 					while diccionario_aux and valores_aux:
-						diccionario = diccionario_aux.pop()
-						valores=valores_aux.pop()
+						diccionario = diccionario_aux.popleft()
+						valores=valores_aux.popleft()
 						lista_diccionarios_aux.append(diccionario)
 						lista_values_aux.append(valores)
 					return
@@ -549,18 +553,15 @@ class Node:
 					elif "mayorIgual" in self.type: 
 						self.value = value_hijo[0]>=value_hijo[1]
 						self.tipo_var = "bool"
-
 					else:
 						print("ERROR1")
-						errores_contexto.append("Error: operación sobre tipos de variables incompatibles\
-												en la línea "+str(self.linea)+".")
+						errores_contexto.append("Error: operación sobre tipos de variables incompatibles en la línea "+str(self.linea)+".")
 						while diccionario_aux and valores_aux:
-							diccionario = diccionario_aux.pop()
-							valores=valores_aux.pop()
+							diccionario = diccionario_aux.popleft()
+							valores=valores_aux.popleft()
 							lista_diccionarios_aux.append(diccionario)
 							lista_values_aux.append(valores)
 						return
-
 				elif self.tipo_var=="bool":
 					if "conjuncion" in self.type:
 						self.value = value_hijo[0] and value_hijo[1]
@@ -576,22 +577,20 @@ class Node:
 
 					else:
 						print("ERROR2")
-						errores_contexto.append("Error: operación sobre tipos de variables incompatibles\
-												en la línea "+str(self.linea)+".")
+						errores_contexto.append("Error: operación sobre tipos de variables incompatibles en la línea "+str(self.linea)+".")
 						while diccionario_aux and valores_aux:
-							diccionario = diccionario_aux.pop()
-							valores=valores_aux.pop()
+							diccionario = diccionario_aux.popleft()
+							valores=valores_aux.popleft()
 							lista_diccionarios_aux.append(diccionario)
 							lista_values_aux.append(valores)
 						return
 
 				else:
 					print("ERROR3")
-					errores_contexto.append("Error: operación sobre tipos de variables incompatibles\
-											en la línea "+str(self.linea)+".")
+					errores_contexto.append("Error: operación sobre tipos de variables incompatibles en la línea "+str(self.linea)+".")
 					while diccionario_aux and valores_aux:
-						diccionario = diccionario_aux.pop()
-						valores=valores_aux.pop()
+						diccionario = diccionario_aux.popleft()
+						valores=valores_aux.popleft()
 						lista_diccionarios_aux.append(diccionario)
 						lista_values_aux.append(valores)
 					return
@@ -601,21 +600,19 @@ class Node:
 					if type_hijo[0]==type_hijo[1]:
 						self.tipo_var=type_hijo[0]
 					else:
-						errores_contexto.append("Error: operación sobre tipos de arreglos incompatibles\
-									en la línea "+str(self.linea)+".")
+						errores_contexto.append("Error: operación sobre tipos de arreglos incompatibles en la línea "+str(self.linea)+".")
 						while diccionario_aux and valores_aux:
-							diccionario = diccionario_aux.pop()
-							valores=valores_aux.pop()
+							diccionario = diccionario_aux.popleft()
+							valores=valores_aux.popleft()
 							lista_diccionarios_aux.append(diccionario)
 							lista_values_aux.append(valores)
 						return
 				else:
 					print("ERROR4")
-					errores_contexto.append("Error: operación sobre tipos de variables incompatibles\
-									en la línea "+str(self.linea)+".")
+					errores_contexto.append("Error: operación sobre tipos de variables incompatibles en la línea "+str(self.linea)+".")
 					while diccionario_aux and valores_aux:
-						diccionario = diccionario_aux.pop()
-						valores=valores_aux.pop()
+						diccionario = diccionario_aux.popleft()
+						valores=valores_aux.popleft()
 						lista_diccionarios_aux.append(diccionario)
 						lista_values_aux.append(valores)
 					return
@@ -633,11 +630,10 @@ class Node:
 					pass
 				else:
 					print("ERROR5")
-					errores_contexto.append("Error: operación sobre tipos de variables incompatibles\
-									en la línea "+str(self.linea)+".")
+					errores_contexto.append("Error: operación sobre tipos de variables incompatibles en la línea "+str(self.linea)+".")
 					while diccionario_aux and valores_aux:
-						diccionario = diccionario_aux.pop()
-						valores=valores_aux.pop()
+						diccionario = diccionario_aux.popleft()
+						valores=valores_aux.popleft()
 						lista_diccionarios_aux.append(diccionario)
 						lista_values_aux.append(valores)
 					return
@@ -649,40 +645,44 @@ class Node:
 						valores[str(self.children[0])]=str(self.children[1].value)
 					else:
 						if self.children[0]!=None and self.children[1]!=None:
-							valores[str(self.children[0])]=str(self.children[1])
+							if isinstance(self.children[1],str):
+								if self.children[1]=="true" or self.children[1]=="false" or "\"" in self.children[1] or "\'" in self.children[1]:
+									valores[str(self.children[0])]=str(self.children[1])
+								else:
+									valores[str(self.children[0])]=valores2[str(self.children[1])]
+							else:
+								valores[str(self.children[0])]=int(self.children[1])
 				elif isDeclaracion:
 					while diccionario_aux and valores_aux:
-						diccionario = diccionario_aux.pop()
-						valores=valores_aux.pop()
+						diccionario = diccionario_aux.popleft()
+						valores=valores_aux.popleft()
 						lista_diccionarios_aux.append(diccionario)
 						lista_values_aux.append(valores)
 					return
 				else:
-					errores_contexto.append("Error: operación asignación sobre tipos incompatibles\
-								en la línea "+str(self.linea)+".")
+					errores_contexto.append("Error: operación asignación sobre tipos incompatibles en la línea "+str(self.linea)+".")
 					while diccionario_aux and valores_aux:
-						diccionario = diccionario_aux.pop()
-						valores=valores_aux.pop()
+						diccionario = diccionario_aux.popleft()
+						valores=valores_aux.popleft()
 						lista_diccionarios_aux.append(diccionario)
 						lista_values_aux.append(valores)
 					return
 				
 				#EN EL ARRAY DE VALORES GLOBAL value_hijo[0] se reemplaza con el value_hijo[1]
 			
-			elif self.type=="comienzo" or self.type=="secuencia":
+			elif self.type=="comienzo" or self.type=="secuencia" or self.type=="beginInterno":
 				while diccionario_aux and valores_aux:
-					diccionario = diccionario_aux.pop()
-					valores=valores_aux.pop()
+					diccionario = diccionario_aux.popleft()
+					valores=valores_aux.popleft()
 					lista_diccionarios_aux.append(diccionario)
 					lista_values_aux.append(valores)
 				return
 			else:
 				print("ERROR")
-				errores_contexto.append("Error: operación asignación sobre tipos de variables incompatibles\
-										en la línea "+str(self.linea)+".")
+				errores_contexto.append("Error: operación asignación sobre tipos de variables incompatibles en la línea "+str(self.linea)+".")
 				while diccionario_aux and valores_aux:
-					diccionario = diccionario_aux.pop()
-					valores=valores_aux.pop()
+					diccionario = diccionario_aux.popleft()
+					valores=valores_aux.popleft()
 					lista_diccionarios_aux.append(diccionario)
 					lista_values_aux.append(valores)
 				return
@@ -697,11 +697,10 @@ class Node:
 					if "menosUnario" in self.type:
 						self.value=(-1)*value_hijo[0]
 					else:
-						errores_contexto.append("Error: operación sobre tipo de variable incompatible\
-												en la línea "+str(self.linea)+".")
+						errores_contexto.append("Error: operación sobre tipo de variable incompatible en la línea "+str(self.linea)+".")
 						while diccionario_aux and valores_aux:
-							diccionario = diccionario_aux.pop()
-							valores=valores_aux.pop()
+							diccionario = diccionario_aux.popleft()
+							valores=valores_aux.popleft()
 							lista_diccionarios_aux.append(diccionario)
 							lista_values_aux.append(valores)
 						return
@@ -710,21 +709,19 @@ class Node:
 					if "negacion" in self.type:
 						self.value = not value_hijo[0]
 					else:
-						errores_contexto.append("Error: operación sobre tipo de variable incompatible\
-												en la línea "+str(self.linea)+".")
+						errores_contexto.append("Error: operación sobre tipo de variable incompatible en la línea "+str(self.linea)+".")
 						while diccionario_aux and valores_aux:
-							diccionario = diccionario_aux.pop()
-							valores=valores_aux.pop()
+							diccionario = diccionario_aux.popleft()
+							valores=valores_aux.popleft()
 							lista_diccionarios_aux.append(diccionario)
 							lista_values_aux.append(valores)
 						return
 
 				else:
-					errores_contexto.append("Error: operación sobre tipo de variable incompatible\
-											en la línea "+str(self.linea)+".")
+					errores_contexto.append("Error: operación sobre tipo de variable incompatible en la línea "+str(self.linea)+".")
 					while diccionario_aux and valores_aux:
-						diccionario = diccionario_aux.pop()
-						valores=valores_aux.pop()
+						diccionario = diccionario_aux.popleft()
+						valores=valores_aux.popleft()
 						lista_diccionarios_aux.append(diccionario)
 						lista_values_aux.append(valores)
 					return
@@ -733,11 +730,10 @@ class Node:
 				if "array" in type_hijo[0]:
 					self.type=type_hijo[0]
 				else:
-					errores_contexto.append("Error: operación sobre tipo de variable incompatible\
-									en la línea "+str(self.linea)+".")
+					errores_contexto.append("Error: operación sobre tipo de variable incompatible en la línea "+str(self.linea)+".")
 					while diccionario_aux and valores_aux:
-						diccionario = diccionario_aux.pop()
-						valores=valores_aux.pop()
+						diccionario = diccionario_aux.popleft()
+						valores=valores_aux.popleft()
 						lista_diccionarios_aux.append(diccionario)
 						lista_values_aux.append(valores)
 					return
@@ -750,11 +746,10 @@ class Node:
 				elif type_hijo[0]=="char":
 					self.tipo_var=type_hijo[0]
 				else:
-					errores_contexto.append("Error: operación sobre tipo de variable incompatible\
-										en la línea "+str(self.linea)+".")
+					errores_contexto.append("Error: operación sobre tipo de variable incompatible en la línea "+str(self.linea)+".")
 					while diccionario_aux and valores_aux:
-						diccionario = diccionario_aux.pop()
-						valores=valores_aux.pop()
+						diccionario = diccionario_aux.popleft()
+						valores=valores_aux.popleft()
 						lista_diccionarios_aux.append(diccionario)
 						lista_values_aux.append(valores)
 					return
@@ -767,11 +762,10 @@ class Node:
 					elif "Ascii" in self.type:
 						self.value=ord(value_hijo[0])
 				else:
-					errores_contexto.append("Error: operación sobre tipo de variable incompatible\
-										en la línea "+str(self.linea)+".")
+					errores_contexto.append("Error: operación sobre tipo de variable incompatible en la línea "+str(self.linea)+".")
 					while diccionario_aux and valores_aux:
-						diccionario = diccionario_aux.pop()
-						valores=valores_aux.pop()
+						diccionario = diccionario_aux.popleft()
+						valores=valores_aux.popleft()
 						lista_diccionarios_aux.append(diccionario)
 						lista_values_aux.append(valores)
 					return
@@ -780,17 +774,19 @@ class Node:
 				if isDeclaracion:
 					return
 				print("ERROR6")
-				errores_contexto.append("Error: operación sobre tipos de variables incompatibles\
-										en la línea "+str(self.linea)+".")
+				errores_contexto.append("Error: operación sobre tipos de variables incompatibles en la línea "+str(self.linea)+".")
 				while diccionario_aux and valores_aux:
-					diccionario = diccionario_aux.pop()
-					valores=valores_aux.pop()
+					diccionario = diccionario_aux.popleft()
+					valores=valores_aux.popleft()
 					lista_diccionarios_aux.append(diccionario)
 					lista_values_aux.append(valores)
 				return
+		print("el nodo de tipo "+self.type+" tiene value "+str(self.value)+" y tipo "+self.tipo_var)
+		m = buildtree(self)
+		print(m)
 		while diccionario_aux and valores_aux:
-			diccionario = diccionario_aux.pop()
-			valores=valores_aux.pop()
+			diccionario = diccionario_aux.popleft()
+			valores=valores_aux.popleft()
 			lista_diccionarios_aux.append(diccionario)
 			lista_values_aux.append(valores)
 		print(lista_diccionarios_aux)
@@ -1390,12 +1386,10 @@ def print_tree(node,n):
 
 def redeclaracion():
 	#Busca en la cola por diccionario
-	i=0
-	for lista in lista_repetidas:
+	for lista in lista_repetidas_aux:
 		while lista:
-			igual=str(lista.popleft())
-			errores_contexto.append("Error: redeclaración de variable "+igual+" en el bloque de declaraciones No. "+str(i)+".")
-		i=i+1
+			igual=lista.popleft()
+			errores_contexto.append("Error: redeclaración de variable "+str(igual[0])+" en la linea No. "+str(igual[1])+".")
 
 def decorateTree(node):
 	if node==None:
@@ -1408,9 +1402,9 @@ def decorateTree(node):
 				print("decorando el arbol")
 				decorateTree(node.children[1])
 				print("sacando el diccionario de este bloque with")
-				diccionario=lista_diccionarios_aux.pop()
+				diccionario=lista_diccionarios_aux.popleft()
 				lista_diccionarios.append(diccionario)
-				valores = lista_values_aux.pop()
+				valores = lista_values_aux.popleft()
 				lista_values.append(valores)
 			else:
 				for child in node.children:
@@ -1442,13 +1436,14 @@ if print_tokens_or_errors()==0: ####Falta formato de errores
 			print(p)
 		else:
 			print(p)
-			redeclaracion()
 			decorateTree(y)
 			print(lista_diccionarios)
 			print(lista_values)
 			print(lista_repetidas_aux)
-			P = buildtree(y)
+			redeclaracion()
+			p = buildtree(y)
 			print(p)
 			if len(errores_contexto)!=0:
+				errores_contexto = list(reversed(errores_contexto))
 				for error in errores_contexto:
 					print(error)
