@@ -261,6 +261,7 @@ lista_repetidas_aux=deque([])
 lista_diccionarios_aux=deque([])
 lista_values_aux=deque([])
 altura = 0
+errorFor = False
 
 def __getVarType__(node):
 	if isinstance(node,Node) and "declaracion" in node.type:
@@ -394,8 +395,10 @@ class Node:
 		return diccionario,repetidas,values
 
 	def calc_tipo(self,isDeclaracion):
+		global errorFor
 		#Vemos los hijos y sus tipos 
 		print("calc type del nodo "+self.type)
+		print("isDeclaracion "+str(isDeclaracion) )
 		diccionario_aux=deque([])
 		valores_aux=deque([])
 		value_hijo=[]
@@ -489,7 +492,7 @@ class Node:
 		print(type_hijo)
 		#Si el value de algun hijo es None, no se puede realizar la operacion
 		for hijo in value_hijo:
-			if hijo=="None":
+			if hijo=="None" and "asignacion" not in self.type:
 				errores_contexto.append("Error: No se puede realizar la operación \""+self.type+"\" sobre variable con valor None en la línea "+str(self.linea)+".")
 				return
 		
@@ -639,6 +642,11 @@ class Node:
 					return
 
 			elif "asignacion" in self.type:
+				print(type_hijo[0]==type_hijo[1])
+				if "IsAForCicle" in diccionario.keys() and str(self.children[0])==valores["IsAForCicle"]:
+					errores_contexto.append("Error: no se puede modificar la variable de control "+str(self.children[0])+" de este ciclo; linea No. "+str(self.linea)+".")
+					errorFor=True
+					return
 				if not isDeclaracion and type_hijo[0]==type_hijo[1]:
 					self.tipo_var=type_hijo[1]
 					if isinstance(self.children[1],Node):
@@ -1001,7 +1009,7 @@ def p_while(p):
 	p[0] = Node('while',[p[2],p[4]],p[1],p.lineno(1))
 
 def p_for(p):
-	'''for : TkFor TkId TkFrom exp TkTo exp TkStep TkNum TkHacer cond TkEnd
+	'''for : TkFor TkId TkFrom exp TkTo exp TkStep exp TkHacer cond TkEnd
 		   | TkFor TkId TkFrom exp TkTo exp TkHacer cond TkEnd'''
 	if len(p)>10:
 		p[0] = Node('for_step',[p[2],p[4],p[6],p[8],p[10]],p[1],p.lineno(1))
@@ -1136,7 +1144,7 @@ def buildtree(node):
 			sting+=", value="+str(node.value)
 		if node.tipo_var:
 			sting+=", tipo_resultante="+node.tipo_var
-		sting+=")\n"
+		sting+=") "
 		
 	else:
 		if isinstance(node,int):
@@ -1391,11 +1399,153 @@ def redeclaracion():
 			igual=lista.popleft()
 			errores_contexto.append("Error: redeclaración de variable "+str(igual[0])+" en la linea No. "+str(igual[1])+".")
 
+def __getWordFromForCicle__(num):
+	if num==1:
+		return "\"From\""
+	elif num==2:
+		return "\"To\""
+	else:
+		return "\"Step\""
+
 def decorateTree(node):
+	global errorFor
 	if node==None:
 		return
 	if isinstance(node,Node):
+		print("\n**decorando nodo de tipo " + node.type)
 		if len(node.children)!=0:
+			if "condicional" in node.type:
+				print("el nodo es un condicional")
+				decorateTree(node.children[0])
+				if node.children[0].value!=None:
+					value = "None"
+				else:
+					value = str(node.children[0].value)
+				print("el valor de la variable es "+ value)
+				if node.children[0].value==True:
+					print("entra por el condicional")
+					decorateTree(node.children[1])
+				else:
+					if "otherwise" in node.type:
+						print("el nodo es un condicional")
+						decorateTree(node.children[2])
+				return
+			if "for" in node.type:
+				print("ciclo for")
+				y=buildtree(node)
+				print(y)
+				limit = len(node.children)-1
+				print("el numero de hijos es "+str(limit)+" + 1")
+				valuesresult=[]
+				errortype = []
+				for i in range(1,limit):
+					print ("hijo "+str(i))
+					decorateTree(node.children[i])
+					if isinstance(node.children[i],int):
+						print("la rama es un entero")
+						valuesresult.append(node.children[i])
+					if isinstance(node.children[i],str):
+						print("la rama es un string")
+						print("se va a buscar en la lista de diccionarios")
+						diccionario_aux = deque([])
+						valores_aux = deque([])
+						diccionario = None
+						valores = None
+						Revised = False
+						# Se busca en la lista de diccionarios
+						while lista_diccionarios_aux and lista_values_aux:
+							diccionario=lista_diccionarios_aux.popleft()
+							valores=lista_values_aux.popleft()
+							diccionario_aux.append(diccionario)
+							valores_aux.append(valores)
+							if str(node.children[i]) in diccionario.keys(): #Si esta en algun diccionario
+								print("está en un diccionario")
+								Revised = True
+								if diccionario[str(node.children[i])]!="int":
+									print("ERROR: no es entero")
+									errortype.append(diccionario[str(node.children[i])])
+									errores_contexto.append("Error: La expresión luego de "+__getWordFromForCicle__(i)+" no es de tipo entero, es de tipo "+diccionario[str(node.children[i])]+"; linea No. "+ str(node.linea) + ".")
+								else:
+									print("puede ser entero")
+									if valores[str(node.children[i])]=="None" or valores[str(node.children[i])]==None or "None" in valores[str(node.children[i])]:
+										print("ERROR: es None")
+										errortype.append(diccionario[str(node.children[i])])
+										errores_contexto.append("Error: La expresión luego de "+__getWordFromForCicle__(i)+" es de tipo entero, pero no fue inicializada; linea No. "+ str(node.linea) + ".")
+									else:
+										valuesresult.append(int(valores[str(node.children[i])]))
+								break
+						# Se restaura la cola de diccionarios y valores
+						while diccionario_aux and valores_aux:
+							diccionario = diccionario_aux.popleft()
+							valores=valores_aux.popleft()
+							lista_diccionarios_aux.append(diccionario)
+							lista_values_aux.append(valores)
+						if not Revised: # No se encuentra en el diccionario
+							if node.children[i]=="true" or node.children[i]=="false":
+								errortype.append("bool")
+								errores_contexto.append("Error: La expresión luego de "+__getWordFromForCicle__(i)+" no es de tipo entero, es de tipo bool; linea No. "+ str(node.linea) + ".")
+							elif "\"" in node.children[i] or "\'" in node.children[i]:
+								errortype.append("char")
+								errores_contexto.append("Error: La expresión luego de "+__getWordFromForCicle__(i)+" no es de tipo entero, es de tipo char; linea No. "+ str(node.linea) + ".")
+							else:
+								errortype.append("None")
+								errores_contexto.append("Error: Variable "+str(node.children[i])+" no declarada, linea No. "+ str(node.linea) + ".")
+					elif isinstance(node.children[i],Node):
+						if node.children[i].tipo_var != "int":
+							errortype.append(node.children[i].tipo_var)
+							errores_contexto.append("Error: La expresión luego de "+__getWordFromForCicle__(i)+" no es de tipo entero, es de tipo "+node.children[i].tipo_var+"; linea No. "+ node.children[i].linea + ".")
+						else:
+							valuesresult.append(node.children[i]).value
+				if len(errortype)>0:
+					return
+				diccionario = OrderedDict()
+				valores = OrderedDict()
+				diccionario[str(node.children[0])]="int"
+				diccionario["IsAForCicle"]="cicle"
+				if len(valuesresult)>2:
+					[start,stop,step] = valuesresult
+				else:
+					[start,stop] = valuesresult
+					step = 1
+				valores[str(node.children[0])]=start
+				valores["IsAForCicle"]=str(node.children[0])
+				backup_lista_diccionarios_aux=lista_diccionarios_aux.copy()
+				backup_lista_values_aux=lista_values_aux.copy()
+				lista_diccionarios_aux.append(diccionario)
+				lista_values_aux.append(valores)
+				i = start
+				while i <= stop:
+					print(str(i))
+					decorateTree(node.children[len(node.children)-1])
+					print(lista_diccionarios_aux)
+					print(lista_values_aux)
+					if errorFor:
+						print("hay un error de for")
+						break
+					i+=step
+				if not errorFor:
+					diccionario=lista_diccionarios_aux.popleft()
+					lista_diccionarios.append(diccionario)
+					valores = lista_values_aux.popleft()
+					lista_values.append(valores)
+				else:
+					print("recuperando la lista, se substituye con ")
+					print(backup_lista_diccionarios_aux)
+					print(backup_lista_values_aux)
+					while lista_diccionarios_aux:
+						diccionario = lista_diccionarios_aux.popleft()
+						valores = lista_values_aux.popleft()
+					while backup_lista_diccionarios_aux:
+						diccionario = backup_lista_diccionarios_aux.popleft()
+						valores = backup_lista_values_aux.popleft()
+						lista_diccionarios_aux.append(diccionario)
+						lista_values_aux.append(valores)
+					errorFor=False
+				print("termina el ciclo for")
+				print(lista_diccionarios_aux)
+				print(lista_values_aux)
+				return
+				
 			if len(node.children)==2 and isinstance(node.children[0],Node) and isinstance(node.children[1],Node) and "declaracion" in node.children[0].type and "declaracion" not in node.children[1].type:
 				print("creando tabla de simbolos")
 				node.children[0].adjuntarTablaSimbolos()
@@ -1406,6 +1556,7 @@ def decorateTree(node):
 				lista_diccionarios.append(diccionario)
 				valores = lista_values_aux.popleft()
 				lista_values.append(valores)
+				return
 			else:
 				for child in node.children:
 					decorateTree(child)		

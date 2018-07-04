@@ -3,14 +3,17 @@ with
     var x <- 4+(6*2), y<-9 : int
     var p : bool
 begin
-    x<-4;
-    y<-6/2;
-    p <- true /\ true \/ false;
-    p <- 2 <= 3;
-    with 
-        var x <- true : bool
-        var x : int
+    with
+        var m : bool
+        var z : int
     begin
-        p <- x;
+        z <- 1;
+        for i from 1 to 10 ->
+            with
+                var m : int
+            begin
+                z <- z + 1;
+            end
+        end
     end
 end
