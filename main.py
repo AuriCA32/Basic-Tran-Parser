@@ -295,6 +295,25 @@ def __getArrayTypeString__(node):
 			string+="("+i+")"
 	return string
 
+def __getArrayFromDeclaration__(node):
+	types = __getListArrayType__(node)
+	finalArray = []
+	tempArray = None
+	for p in range(len(types)-1,-1,-1):
+		i = types[p]
+		tempArray = []
+		if isinstance(i,int):
+			for m in range(i):
+				tempArray.append(None)
+			if finalArray==[]:
+				finalArray = tempArray.copy()
+			else:
+				for num in range(len(tempArray)):
+					tempArray[num] = finalArray.copy()
+				finalArray = tempArray.copy()
+	return finalArray
+					
+				
 #Crea el arbol
 class Node:
 	def __init__(self,type,children=None,leaf=None,linea=None):
@@ -348,7 +367,7 @@ class Node:
 					else:
 						print("el segundo nodo es un terminal")
 						if "declaracionArray" in self.type:
-							values[str(self.children[0])]="None"
+							values[str(self.children[0])]=__getArrayFromDeclaration__(self)
 						else:
 							values[str(self.children[0])]=str(self.children[1])
 					if str(self.children[0]) in diccionario.keys():
@@ -407,7 +426,6 @@ class Node:
 		valores1 = None
 		diccionario2 = None
 		valores2 = None
-		cola_aux=deque([])
 		i=0
 		for i in range(len(self.children)): #Es 2 o 1
 			if isinstance(self.children[i],Node):
@@ -919,6 +937,7 @@ def p_type(p):
 
 def p_arrayaux(p):
 	'''arrayaux : TkNum
+				| TkId
 				| TkNum TkComa TkNum'''
 	if len(p)>2:
 		p[0] = Node('rangoArreglo',[p[1],p[3]],p[2],p.lineno(1))
@@ -926,11 +945,13 @@ def p_arrayaux(p):
 		p[0] = p[1]
 
 def p_ingresarEnArreglo(p):
-	'''ingresarEnArreglo : TkCorcheteAbre arrayaux TkCorcheteCierra ingresarEnArreglo
+	'''ingresarEnArreglo : ingresarEnArreglo TkCorcheteAbre arrayaux TkCorcheteCierra
 						 | TkCorcheteAbre arrayaux TkCorcheteCierra'''
 	if len(p)>4:
-		p[0] = Node('secuencia-accederEnArreglo',[p[2],p[4]],None,p.lineno(1))
+		print(p[3])
+		p[0] = Node('secuencia-accederEnArreglo',[p[1],p[3]],None,p.lineno(1))
 	else:
+		print(p[2])
 		p[0] = p[2]
 	
 def p_cond(p):
@@ -1140,12 +1161,44 @@ def buildtree(node):
 		for child in node.children:
 			sting+=", hijo"+str(i)+"="+buildtree(child)+""
 			i=i+1
-		if node.value:
+		if node.value:	
 			sting+=", value="+str(node.value)
 		if node.tipo_var:
 			sting+=", tipo_resultante="+node.tipo_var
 		sting+=") "
 		
+	else:
+		if isinstance(node,int):
+			sting+=str(node)
+		else:
+			sting+=node
+	return sting
+
+def buildtree2(node):
+	sting=""
+	if node==None:
+		return sting
+	if isinstance(node,Node):
+		sting+="( tipo: "+node.type
+		if node.leaf!=None:
+			sting+=", hoja: "+node.leaf
+		if node.value:	
+			sting+=", value="+str(node.value)
+		if node.tipo_var:
+			sting+=", tipo_resultante="+node.tipo_var
+		sting+=")"
+		i=0
+		for child in node.children:
+			sting+="\n|_ hijo"+str(i)+" "
+			temp = buildtree2(child).split("\n")
+			sting+=temp[0]+"\n"
+			if len(temp)>1:
+				for m in range(1,len(temp)):
+					if m==len(temp)-1:
+						sting+="   "+temp[m]
+					else:
+						sting+="   "+temp[m]+"\n"
+			i=i+1	
 	else:
 		if isinstance(node,int):
 			sting+=str(node)
@@ -1414,6 +1467,8 @@ def decorateTree(node):
 	if isinstance(node,Node):
 		print("\n**decorando nodo de tipo " + node.type)
 		if len(node.children)!=0:
+			if "accederEnArreglo" in node.type:
+				return
 			if "condicional" in node.type:
 				print("el nodo es un condicional")
 				decorateTree(node.children[0])
@@ -1546,11 +1601,12 @@ def decorateTree(node):
 				print(lista_values_aux)
 				return
 				
-			if len(node.children)==2 and isinstance(node.children[0],Node) and isinstance(node.children[1],Node) and "declaracion" in node.children[0].type and "declaracion" not in node.children[1].type:
+			if len(node.children)>0 and isinstance(node.children[0],Node) and "declaracion" in node.children[0].type:
 				print("creando tabla de simbolos")
 				node.children[0].adjuntarTablaSimbolos()
-				print("decorando el arbol")
-				decorateTree(node.children[1])
+				if len(node.children)>1 and isinstance(node.children[1],Node):
+					print("decorando el arbol")
+					decorateTree(node.children[1])
 				print("sacando el diccionario de este bloque with")
 				diccionario=lista_diccionarios_aux.popleft()
 				lista_diccionarios.append(diccionario)
@@ -1587,6 +1643,8 @@ if print_tokens_or_errors()==0: ####Falta formato de errores
 			print(p)
 		else:
 			print(p)
+			x = buildtree2(y)
+			print(x)
 			decorateTree(y)
 			print(lista_diccionarios)
 			print(lista_values)
@@ -1594,6 +1652,8 @@ if print_tokens_or_errors()==0: ####Falta formato de errores
 			redeclaracion()
 			p = buildtree(y)
 			print(p)
+			x = buildtree2(y)
+			print(x)
 			if len(errores_contexto)!=0:
 				errores_contexto = list(reversed(errores_contexto))
 				for error in errores_contexto:
