@@ -273,20 +273,20 @@ def __getListArrayType__(node):
 	types = []
 	if isinstance(node,Node):
 		y = buildtree(node)
-		print(y)
+		#print(y)
 		types.append(node.children[len(node.children)-2])
 		temp = __getListArrayType__(node.children[len(node.children)-1])
 		for i in temp:
 			types.append(i)
 	else:
-		print(node)
+		#print(node)
 		types.append(node)
-	print(types)
+	#print(types)
 	return types
 		
 def __getArrayTypeString__(node):
 	types = __getListArrayType__(node)
-	print(types)
+	#print(types)
 	string=""
 	for i in types:
 		if isinstance(i,int):
@@ -338,7 +338,9 @@ class Node:
 
 	def __recorrerDeclaraciones__(self,diccionario,repetidas,values):	
 		print("entro")
+		print("diccionario")
 		print(diccionario)
+		print("valores")
 		print(values)
 		if self==None:
 			return diccionario,repetidas,values
@@ -409,7 +411,9 @@ class Node:
 								else:
 									diccionario[str(node.children[0])]="char"
 		print("salio")
+		print("diccionario")
 		print(diccionario)
+		print("values")
 		print(values)
 		return diccionario,repetidas,values
 
@@ -531,7 +535,6 @@ class Node:
 						lista_diccionarios_aux.append(diccionario)
 						lista_values_aux.append(valores)
 					return
-				######FALTA MODIFICAR EL DICCIONARIO GLOBAL DE VALORES
 				if self.tipo_var=="int":
 					if "suma" in self.type:
 						self.value=value_hijo[0]+value_hijo[1]
@@ -660,7 +663,7 @@ class Node:
 					return
 
 			elif "asignacion" in self.type:
-				print(type_hijo[0]==type_hijo[1])
+				print("type_hijo[0]==type_hijo[1]: "+str(type_hijo[0]==type_hijo[1]))
 				if "IsAForCicle" in diccionario.keys() and str(self.children[0])==valores["IsAForCicle"]:
 					errores_contexto.append("Error: no se puede modificar la variable de control "+str(self.children[0])+" de este ciclo; linea No. "+str(self.linea)+".")
 					errorFor=True
@@ -685,7 +688,9 @@ class Node:
 						lista_diccionarios_aux.append(diccionario)
 						lista_values_aux.append(valores)
 					return
+				
 				else:
+					print("ERRORCITO")
 					errores_contexto.append("Error: operación asignación sobre tipos incompatibles en la línea "+str(self.linea)+".")
 					while diccionario_aux and valores_aux:
 						diccionario = diccionario_aux.popleft()
@@ -782,11 +787,18 @@ class Node:
 
 				if self.tipo_var=="char":
 					if "anterior" in self.type:
-						self.value=chr((ord(value_hijo[0])-1)%128)
+						print("Hace operacion anterior de char")
+						value_hijo[0]=value_hijo[0].strip("\'")
+						self.value="\'"+chr((ord(value_hijo[0])-1)%128)+"\'"
 					elif "siguiente" in self.type:
-						self.value=chr((ord(value_hijo[0])+1)%128)
+						print("Hace operacion siguiente de char")
+						value_hijo[0]=value_hijo[0].strip("\'")
+						self.value="\'"+chr((ord(value_hijo[0])+1)%128)+"\'"
 					elif "Ascii" in self.type:
+						print("Hace operacion ascii de char")
+						value_hijo[0]=value_hijo[0].strip("\'")
 						self.value=ord(value_hijo[0])
+						self.tipo_var="int"
 				else:
 					errores_contexto.append("Error: operación sobre tipo de variable incompatible en la línea "+str(self.linea)+".")
 					while diccionario_aux and valores_aux:
@@ -808,8 +820,8 @@ class Node:
 					lista_values_aux.append(valores)
 				return
 		print("el nodo de tipo "+self.type+" tiene value "+str(self.value)+" y tipo "+self.tipo_var)
-		m = buildtree(self)
-		print(m)
+		#m = buildtree(self)
+		#print(m)
 		while diccionario_aux and valores_aux:
 			diccionario = diccionario_aux.popleft()
 			valores=valores_aux.popleft()
@@ -1122,7 +1134,7 @@ def p_operacion(p):
 			p[0] = Node('siguienteChar',[p[1]],p[2],p.lineno(1))
 		elif p[2]=="--":
 			p[0] = Node('anteriorChar',[p[1]],p[2],p.lineno(1))
-		elif p[1]=="\#":
+		elif p[1]=="#":
 			p[0] = Node('valorAscii',[p[2]],p[1],p.lineno(1))
 		elif p[1]=="$":
 			p[0] = Node('shift',[p[2]],p[1],p.lineno(1))
