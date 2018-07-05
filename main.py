@@ -648,7 +648,7 @@ class Node:
 					pass
 				elif "rango" in self.type:
 					pass
-				elif "secuencia" in self.type:
+				elif "secuencia" in self.type: #CREO QUE ESTO NO SE MANEJA AQUI
 					pass
 				elif self.type=="accederEnArreglo":
 					pass
