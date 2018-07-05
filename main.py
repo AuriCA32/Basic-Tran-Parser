@@ -665,13 +665,8 @@ class Node:
 					return
 
 			elif "asignacion" in self.type:
-<<<<<<< HEAD
-				print(type_hijo[0]==type_hijo[1])
-				if diccionario!=None and "IsAForCicle" in diccionario.keys() and str(self.children[0])==valores["IsAForCicle"]:
-=======
 				print("type_hijo[0]==type_hijo[1]: "+str(type_hijo[0]==type_hijo[1]))
-				if "IsAForCicle" in diccionario.keys() and str(self.children[0])==valores["IsAForCicle"]:
->>>>>>> c893afd789241501a68b4638a46f3ad9bb14cf24
+				if diccionario!=None and "IsAForCicle" in diccionario.keys() and str(self.children[0])==valores["IsAForCicle"]:
 					errores_contexto.append("Error: no se puede modificar la variable de control "+str(self.children[0])+" de este ciclo; linea No. "+str(self.linea)+".")
 					errorFor=True
 					return
