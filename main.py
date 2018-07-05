@@ -426,6 +426,8 @@ class Node:
 		valores_aux=deque([])
 		value_hijo=[]
 		type_hijo=[]
+		diccionario = None
+		valores = None
 		diccionario1 = None
 		valores1 = None
 		diccionario2 = None
@@ -664,7 +666,7 @@ class Node:
 
 			elif "asignacion" in self.type:
 				print("type_hijo[0]==type_hijo[1]: "+str(type_hijo[0]==type_hijo[1]))
-				if "IsAForCicle" in diccionario.keys() and str(self.children[0])==valores["IsAForCicle"]:
+				if diccionario!=None and "IsAForCicle" in diccionario.keys() and str(self.children[0])==valores["IsAForCicle"]:
 					errores_contexto.append("Error: no se puede modificar la variable de control "+str(self.children[0])+" de este ciclo; linea No. "+str(self.linea)+".")
 					errorFor=True
 					return
@@ -1201,7 +1203,7 @@ def buildtree2(node):
 		sting+=")"
 		i=0
 		for child in node.children:
-			sting+="\n|_ hijo"+str(i)+" "
+			sting+="\n|_ hijo "+str(i)+": "
 			temp = buildtree2(child).split("\n")
 			sting+=temp[0]+"\n"
 			if len(temp)>1:
