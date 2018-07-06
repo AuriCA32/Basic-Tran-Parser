@@ -1,19 +1,8 @@
-
 with
     var x <- 4+(6*2), y<-9 : int
-    var p : bool
+    var p : array[3] of array[2] of int
 begin
-    with
-        var m : bool
-        var z : int
-    begin
-        z <- 1;
-        for i from 1 to 10 ->
-            with
-                var m : int
-            begin
-                z <- z + 1;
-            end
-        end
+    for i from 0 to 2 ->
+        z[i][0] <- i;
     end
 end

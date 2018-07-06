@@ -269,24 +269,24 @@ def __getVarType__(node):
 	else:
 		return node
 
+# Retorna la dimensión y tipo del array en una lista con el formato:
+# 	[i,j,,k...,type] con i,j,k... enteros y type = ("bool"|"int"|"char")
 def __getListArrayType__(node):
 	types = []
 	if isinstance(node,Node):
 		y = buildtree(node)
-		#print(y)
 		types.append(node.children[len(node.children)-2])
 		temp = __getListArrayType__(node.children[len(node.children)-1])
 		for i in temp:
 			types.append(i)
 	else:
-		#print(node)
 		types.append(node)
-	#print(types)
 	return types
-		
+
+# Retorna la dimensión y tipo del array en un string con el formato:
+# 	[i][j][k]...(type) con i,j,k... enteros y type = ("bool"|"int"|"char")
 def __getArrayTypeString__(node):
 	types = __getListArrayType__(node)
-	#print(types)
 	string=""
 	for i in types:
 		if isinstance(i,int):
@@ -295,6 +295,9 @@ def __getArrayTypeString__(node):
 			string+="("+i+")"
 	return string
 
+# Dada la declaración de un arreglo dado en formato string como en la
+# función anterior, retorna un arreglo ya creado con las dimensiones
+# especificadas.
 def __getArrayFromDeclaration__(node):
 	types = __getListArrayType__(node)
 	finalArray = []
@@ -312,6 +315,55 @@ def __getArrayFromDeclaration__(node):
 					tempArray[num] = finalArray.copy()
 				finalArray = tempArray.copy()
 	return finalArray
+
+def __searchElementinDictReturnDict__(nodeStr):
+	diccionario = None
+	valores = None
+	diccionario_aux = deque([])
+	valores_aux = deque([])
+	while lista_diccionarios_aux and lista_values_aux:
+		diccionario=lista_diccionarios_aux.popleft()
+		valores=lista_values_aux.popleft()
+		diccionario_aux.append(diccionario)
+		valores_aux.append(valores)
+		if str(node.children[i]) in diccionario.keys(): #Si esta en algun diccionario
+			break
+	#Restaurar listas
+	while diccionario_aux and valores_aux:
+		diccionario = diccionario_aux.popleft()
+		valores=valores_aux.popleft()
+		lista_diccionarios_aux.append(diccionario)
+		lista_values_aux.append(valores)
+	return [diccionario,valores]
+
+def __getDetailsFromDeclaration__(strDeclaracion):
+	strDeclaracion = strDeclaracion.strip("array")
+	temp = strDeclaracion.split("]")
+	for p in range(len(temp)):
+		i = temp[p]
+		if "[" in i:
+			temp[p] = i.strip("[")
+		elif "(" in i:
+			temp[p] = i.strip(")")
+			temp[p] = i.strip("(")
+
+def __checkModifyArrayElement__(node):
+	detailsArrayElement = __getListArrayType__(node)
+	print("la lista obtenida es "+str(detailsArrayElement))
+	for p in range(len(detailsArrayElement)):
+		i = detailsArrayElement[p]
+		if isinstance(i,str) and i!="true" and i!="false" and "\"" not in i and "\'" not in i:
+			[diccionario,valores] = __searchElementinDictReturnDict__(i)
+			if diccionario==None:
+				errores_contexto.append("Error: variable "+i+" no declarada, línea "+str(node.linea))
+			elif diccionario!=None and p!=0 and valores[str(i)]!="int":
+				errores_contexto.append("Error: El acceso a una posición del arreglo "+detailsArrayElement[0]+" sólo es posible con variables de tipo int, pero se encontró "+str(i)+" de tipo "+diccionario[str(i)])
+			elif diccionario!=None and p==0:
+				listaaux = detailsArrayElement.copy()
+				# Se toma la lista y se le quita el primer elemento
+				listaaux.reverse()
+				temp = listaaux.pop()
+				listaaux.reverse()
 					
 				
 #Crea el arbol
@@ -652,8 +704,8 @@ class Node:
 					pass
 				elif "secuencia" in self.type:
 					pass
-				elif self.type=="accederEnArreglo":
-					pass
+				# elif "accederEnArreglo" in self.type:
+				# 	__checkModifyArrayElement__(self)
 				else:
 					print("ERROR5")
 					errores_contexto.append("Error: operación sobre tipos de variables incompatibles en la línea "+str(self.linea)+".")
@@ -669,6 +721,9 @@ class Node:
 				if diccionario!=None and "IsAForCicle" in diccionario.keys() and str(self.children[0])==valores["IsAForCicle"]:
 					errores_contexto.append("Error: no se puede modificar la variable de control "+str(self.children[0])+" de este ciclo; linea No. "+str(self.linea)+".")
 					errorFor=True
+					return
+				if isinstance(self.children[0],Node) and "accederEnArreglo" in self.children[0].type:
+					__checkModifyArrayElement__(self.children[0])
 					return
 				if not isDeclaracion and type_hijo[0]==type_hijo[1]:
 					self.tipo_var=type_hijo[1]
