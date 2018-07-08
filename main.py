@@ -321,12 +321,14 @@ def __searchElementinDictReturnDict__(nodeStr):
 	valores = None
 	diccionario_aux = deque([])
 	valores_aux = deque([])
+	found = False
 	while lista_diccionarios_aux and lista_values_aux:
 		diccionario=lista_diccionarios_aux.popleft()
 		valores=lista_values_aux.popleft()
 		diccionario_aux.append(diccionario)
 		valores_aux.append(valores)
 		if str(nodeStr) in diccionario.keys(): #Si esta en algun diccionario
+			found=True
 			break
 	#Restaurar listas
 	while diccionario_aux and valores_aux:
@@ -334,6 +336,9 @@ def __searchElementinDictReturnDict__(nodeStr):
 		valores=valores_aux.popleft()
 		lista_diccionarios_aux.append(diccionario)
 		lista_values_aux.append(valores)
+	if not found:
+		diccionario = None
+		valores = None
 	return [diccionario,valores]
 
 def __getDetailsFromDeclaration__(strDeclaracion):
@@ -468,7 +473,14 @@ def __modifyArray__(listofparameters,node,linea):
 	# Se modifica el valor
 	temp[detailsArrayElement[0]] = nodevalue
 	return
-				
+def __fixBoolValuesInDict__(diccionario,valores):
+	for i in diccionario.keys():
+		if diccionario[i]=="bool":
+			if valores[i]=="true":
+				valores[i]=True
+			elif valores[i]=="false":
+				valores[i]=False
+
 #Crea el arbol
 class Node:
 	def __init__(self,type,children=None,leaf=None,linea=None):
@@ -566,6 +578,7 @@ class Node:
 								else:
 									diccionario[str(node.children[0])]="char"
 		print("salio")
+		__fixBoolValuesInDict__(diccionario, values)
 		print("diccionario")
 		print(diccionario)
 		print("values")
@@ -840,6 +853,7 @@ class Node:
 							if isinstance(self.children[1],str):
 								if self.children[1]=="true" or self.children[1]=="false" or "\"" in self.children[1] or "\'" in self.children[1]:
 									valores[str(self.children[0])]=str(self.children[1])
+									__fixBoolValuesInDict__(diccionario,valores)
 								else:
 									valores[str(self.children[0])]=valores2[str(self.children[1])]
 							else:
@@ -1647,19 +1661,94 @@ def decorateTree(node):
 			if "condicional" in node.type:
 				print("el nodo es un condicional")
 				decorateTree(node.children[0])
-				if node.children[0].value!=None:
-					value = "None"
+				tiporesult = None
+				valresultante = None
+				if isinstance(node.children[0],str):
+					if "true" in node.children[0]:
+						tiporesult = "bool"
+						valresultante = True
+					elif "false" in node.children[0]:
+						tiporesult = "bool"
+						valresultante = False
+					elif "\"" in node.children[0] or "\'" in node.children[0]:
+						tiporesult = "char"
+					else:
+						[diccionario,valores]=__searchElementinDictReturnDict__(node.children[0])
+						if diccionario==None:
+							errores_contexto.append("Error: Variable "+str(node.children[0])+" no declarada, linea No. "+ str(node.linea) + ".")
+						else:
+							tiporesult = diccionario[str(node.children[0])]
+							valresultante = valores[str(node.children[0])]
+				elif isinstance(node.children[0],int):
+					tiporesult = "int"
+				else: #es un nodo
+					tiporesult = node.children[0].tipo_var
+					valresultante = node.children[0].value
+				print("el valor de la variable es "+ str(valresultante))
+				if tiporesult!="bool":
+					errores_contexto.append("Error: La expresión en el \"while\" tiene que ser de tipo bool, pero se encontró "+str(tiporesult)+". Linea No. "+str(node.linea)+".")
+					return
+				if tiporesult=="bool" and (valresultante ==None or valresultante=="None"):
+					errores_contexto.append("Error: variable no inicializada. Linea No. "+str(node.linea)+".")
+					return
 				else:
-					value = str(node.children[0].value)
-				print("el valor de la variable es "+ value)
-				if node.children[0].value==True:
-					print("entra por el condicional")
-					decorateTree(node.children[1])
+					if valresultante==True:
+						print("entra por el condicional")
+						decorateTree(node.children[1])
+					else:
+						if "otherwise" in node.type:
+							print("el nodo es un condicional")
+							decorateTree(node.children[2])
+					return
+			if "while" in node.type:
+				print("el nodo es un while")
+				decorateTree(node.children[0])
+				tiporesult = None
+				valresultante = None
+				if isinstance(node.children[0],str):
+					if "true" in node.children[0]:
+						errores_contexto.append("Error: Un while con condición true que no puede ser cambiada conlleva a un ciclo infinito. Linea No. "+str(node.linea)+".")
+						return
+					elif "false" in node.children[0]:
+						tiporesult = "bool"
+						valresultante = False
+					elif "\"" in node.children[0] or "\'" in node.children[0]:
+						tiporesult = "char"
+					else:
+						[diccionario,valores]=__searchElementinDictReturnDict__(node.children[0])
+						if diccionario==None:
+							errores_contexto.append("Error: Variable "+str(node.children[0])+" no declarada, linea No. "+ str(node.linea) + ".")
+						else:
+							tiporesult = diccionario[str(node.children[0])]
+							valresultante = valores[str(node.children[0])]
+				elif isinstance(node.children[0],int):
+					tiporesult = "int"
+				else: #es un nodo
+					tiporesult = node.children[0].tipo_var
+					valresultante = node.children[0].value
+				print("el valor de la variable es "+ str(valresultante))
+				if tiporesult!="bool":
+					errores_contexto.append("Error: La expresión en el \"while\" tiene que ser de tipo bool, pero se encontró "+str(tiporesult)+". Linea No. "+str(node.linea)+".")
+					return
+				if tiporesult=="bool" and (valresultante ==None or valresultante=="None"):
+					errores_contexto.append("Error: variable no inicializada. Linea No. "+str(node.linea)+".")
+					return
 				else:
-					if "otherwise" in node.type:
-						print("el nodo es un condicional")
-						decorateTree(node.children[2])
-				return
+					numrecursions = 0
+					while valresultante==True:
+						print("está en el ciclo while")
+						decorateTree(node.children[1])
+						if isinstance(node.children[0],Node):
+							decorateTree(node.children[0])
+							valresultante=node.children[0].value
+						elif node.children[0] in diccionario.keys():
+							valresultante = valores[str(node.children[0])]
+						if numrecursions > 1000:
+							errores_contexto.append("Error: Stack overflow en ciclo while. Linea No. "+str(node.linea)+".")
+							break
+						numrecursions+=1
+					print("salio del while")
+					return
 			if "for" in node.type:
 				print("ciclo for")
 				y=buildtree(node)

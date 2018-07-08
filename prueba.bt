@@ -1,9 +1,16 @@
 with
     var x <- 4+(6*2), y<-9 : int
     var p : array[3] of array[2] of int
-    var z : array[1] of int
+    var m <- true : bool
 begin
-    x <- 0;
-    y <- true;
-    p[0] <- z;
+    x <- 10;
+    y <- 0;
+    m <- true /\ true;
+    while m ->
+        y <- y + 2;
+        x <- x-2;
+        if x <= 0 ->
+            m <- false;
+        end
+    end
 end
