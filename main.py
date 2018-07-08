@@ -208,8 +208,8 @@ precedence=(
 	('right', 'TkValorAscii'),
 	('left', 'TkConcatenacion'),
 	('right', 'TkShift'),
+	('left', 'TkCorcheteCierra'),
 	('right', 'TkCorcheteAbre'),
-	('left', 'TkCorcheteCierra')
 	)
 
 declaracion=["secuencia_declaraciones",
@@ -326,7 +326,7 @@ def __searchElementinDictReturnDict__(nodeStr):
 		valores=lista_values_aux.popleft()
 		diccionario_aux.append(diccionario)
 		valores_aux.append(valores)
-		if str(node.children[i]) in diccionario.keys(): #Si esta en algun diccionario
+		if str(nodeStr) in diccionario.keys(): #Si esta en algun diccionario
 			break
 	#Restaurar listas
 	while diccionario_aux and valores_aux:
@@ -342,29 +342,132 @@ def __getDetailsFromDeclaration__(strDeclaracion):
 	for p in range(len(temp)):
 		i = temp[p]
 		if "[" in i:
-			temp[p] = i.strip("[")
+			i = i.strip("[")
+			temp[p] = int(i)
 		elif "(" in i:
-			temp[p] = i.strip(")")
+			i = i.strip(")")
 			temp[p] = i.strip("(")
+	return temp
 
-def __checkModifyArrayElement__(node):
+def __checkReturnArrayElement__(node):
 	detailsArrayElement = __getListArrayType__(node)
+	numerrores = len(errores_contexto)
 	print("la lista obtenida es "+str(detailsArrayElement))
 	for p in range(len(detailsArrayElement)):
 		i = detailsArrayElement[p]
+		print("trabajando con " + str(i))
 		if isinstance(i,str) and i!="true" and i!="false" and "\"" not in i and "\'" not in i:
+			print("es un id")
 			[diccionario,valores] = __searchElementinDictReturnDict__(i)
 			if diccionario==None:
-				errores_contexto.append("Error: variable "+i+" no declarada, línea "+str(node.linea))
-			elif diccionario!=None and p!=0 and valores[str(i)]!="int":
-				errores_contexto.append("Error: El acceso a una posición del arreglo "+detailsArrayElement[0]+" sólo es posible con variables de tipo int, pero se encontró "+str(i)+" de tipo "+diccionario[str(i)])
-			elif diccionario!=None and p==0:
-				listaaux = detailsArrayElement.copy()
-				# Se toma la lista y se le quita el primer elemento
-				listaaux.reverse()
-				temp = listaaux.pop()
-				listaaux.reverse()
-					
+				print("no está en el diccionario")
+				errores_contexto.append("Error: variable "+i+" no declarada, línea "+str(node.linea)+".")
+				if p==0:
+					break
+			elif diccionario!=None and p!=0 and diccionario[str(i)]!="int":
+				print("Está en el diccionario pero no es int")
+				errores_contexto.append("Error: El acceso a una posición del arreglo "+detailsArrayElement[0]+" sólo es posible con variables de tipo int, pero se encontró "+str(i)+" de tipo "+diccionario[str(i)]+". Linea No. "+str(node.linea)+".")
+			elif diccionario!=None and p!=0 and diccionario[str(i)]=="int":
+				print("Está en el dict y es int")
+				detailsArrayElement[p] = valores[str(i)]
+		elif isinstance(i,str) and (i=="true" or i=="false"):
+			print("es un bool")
+			errores_contexto.append("Error: El acceso a una posición del arreglo "+detailsArrayElement[0]+" sólo es posible con variables de tipo int, pero se encontró "+str(i)+" de tipo bool. Linea No. "+str(node.linea)+".")
+		elif isinstance(i,str) and ("\"" in i or "\'" in i):
+			print("es un char")
+			errores_contexto.append("Error: El acceso a una posición del arreglo "+detailsArrayElement[0]+" sólo es posible con variables de tipo int, pero se encontró "+str(i)+" de tipo char. Linea No. "+str(node.linea)+".")
+	print("la lista actualizada es "+str(detailsArrayElement))
+	if len(errores_contexto)>numerrores:
+		print("Se generaron errores al acceder en el arreglo. Return")
+		return None
+	detailsArrayElement.reverse()
+	arrayname = detailsArrayElement.pop()
+	detailsArrayElement.reverse()
+	print("El nombre del arreglo es " + str(arrayname)+" y sus especificaciones aqui son "+str(detailsArrayElement))
+	[diccionario,valores] = __searchElementinDictReturnDict__(arrayname)
+	detailsfromDeclaration = __getDetailsFromDeclaration__(diccionario[str(arrayname)])
+	tipeofarray = detailsfromDeclaration.pop()
+	print("Los detalles obtenidos de la declaracion son "+str(detailsfromDeclaration))
+	for i in range(len(detailsArrayElement)):
+		if detailsArrayElement[i] >= detailsfromDeclaration[i]:
+			print("Index del array out of range.")
+			errores_contexto.append("Error: Index fuera de rango. Linea No. "+str(node.linea)+".")
+	if len(detailsArrayElement)>len(detailsfromDeclaration):
+		print("se está intentando acceder en arreglos internos que no existen")
+		errores_contexto.append("Error: Se intenta acceder a arreglos internos que no existen. Linea No. "+str(node.linea)+".")
+	if len(errores_contexto)>numerrores:
+		print("Se generaron errores al acceder en el arreglo. Return")
+		return None
+	return [valores,arrayname,detailsArrayElement,detailsfromDeclaration,tipeofarray]
+
+def __modifyArray__(listofparameters,node,linea):
+	print("se va modificar el arreglo")
+	[valoresArray,arrayname,detailsArrayElement,detailsfromDeclaration,tipeofarray] = listofparameters
+	numerrores = len(errores_contexto)
+	if isinstance(node,str):
+		print("el hijo izquierdo es un string")
+		if node=="true" or node=="false":
+			print("es un bool")
+			nodetype = "bool"
+			nodevalue = node
+		elif "\"" in node or "\'" in node:
+			print("es un char")
+			nodetype = "char"
+			nodevalue = node
+		else:
+			print("es un id")
+			[dictnode,valnode]=__searchElementinDictReturnDict__(node)
+			if dictnode==None:
+				errores_contexto.append("Error: variable "+node+" no declarada, línea "+str(linea)+".")
+			nodetype = dictnode[str(node)]
+			nodevalue = valnode[str(node)]
+	elif isinstance(node,int):
+		print("el hijo izquierdo es un int")
+		nodetype = "int"
+		nodevalue = node
+	else: #es una instancia de la clase nodo
+		print("el hijo izquierdo es un nodo")
+		nodetype = node.tipo_var
+		nodevalue = node.value
+		linea = node.linea
+	print("el hijo izq es de tipo "+str(nodetype)+" y tiene valor "+str(nodevalue))
+	print("el hijo derecho tiene tipo "+str(tipeofarray))
+	if len(detailsArrayElement)==len(detailsfromDeclaration):
+		print("Coincide el acceso con lo que dice la declaración")
+		if nodetype!=tipeofarray:
+			print("ERROR-array")
+			errores_contexto.append("Error: operación asignación sobre tipos incompatibles en la línea "+str(linea)+".")
+	else:
+		print("El hijo izquierdo tiene que ser arreglo porque el derecho no llega al fondo")
+		#el otro lado tiene que ser un arreglo y del mismo tipo
+		nodetypelist = __getDetailsFromDeclaration__(nodetype)
+		print("los detalles del hijo izq son "+str(nodetypelist))
+		nodetype = nodetypelist.pop()
+		temp = len(detailsfromDeclaration) - (len(detailsfromDeclaration) - len(detailsArrayElement))
+		detailsfromDeclaration = detailsfromDeclaration[temp:len(detailsfromDeclaration)]
+		print(detailsfromDeclaration)
+		if nodetype!=tipeofarray or len(detailsfromDeclaration)!=len(nodetypelist):
+			print("ERROR-array2")
+			errores_contexto.append("Error: operación asignación sobre tipos incompatibles en la línea "+str(linea)+".")
+		else:
+			for i in range(len(nodetypelist)):
+				if detailsfromDeclaration[i]!=nodetypelist[i]:
+					errores_contexto.append("Error: operación asignación sobre tipos incompatibles en la línea "+str(linea)+".")
+					break
+	if len(errores_contexto)>numerrores:
+		print("Se generaron errores al modificar el arreglo. Return")
+		return
+	temp = valoresArray[str(arrayname)]
+	detailsArrayElement.reverse()
+	# Se accede en el arreglo
+	while detailsArrayElement:
+		if len(detailsArrayElement)==1:
+			break
+		i = detailsArrayElement.pop()
+		temp = temp[i]
+	# Se modifica el valor
+	temp[detailsArrayElement[0]] = nodevalue
+	return
 				
 #Crea el arbol
 class Node:
@@ -704,8 +807,6 @@ class Node:
 					pass
 				elif "secuencia" in self.type:
 					pass
-				# elif "accederEnArreglo" in self.type:
-				# 	__checkModifyArrayElement__(self)
 				else:
 					print("ERROR5")
 					errores_contexto.append("Error: operación sobre tipos de variables incompatibles en la línea "+str(self.linea)+".")
@@ -723,7 +824,12 @@ class Node:
 					errorFor=True
 					return
 				if isinstance(self.children[0],Node) and "accederEnArreglo" in self.children[0].type:
-					__checkModifyArrayElement__(self.children[0])
+					temp = __checkReturnArrayElement__(self.children[0])
+					if temp==None:
+						return
+					# Si continua es porque el array existe, no existen index fuera de rango
+					#	y no se está excediendo el numero de arreglos dentro de arreglos
+					__modifyArray__(temp,self.children[1],self.linea)
 					return
 				if not isDeclaracion and type_hijo[0]==type_hijo[1]:
 					self.tipo_var=type_hijo[1]
@@ -983,7 +1089,7 @@ def p_declaracion_idBool(p):
 #declaracion de arreglos
 def p_declaracion_array(p):
 	'''declaracionArray : TkId TkComa declaracionArray
-						| TkId TkDosPuntos TkArray TkCorcheteAbre TkNum TkCorcheteCierra type2'''
+						| TkId TkDosPuntos TkArray TkCorcheteAbre exp TkCorcheteCierra type2'''
 	if len(p)>4:
 		p[0]=Node('declaracionArray',[p[1],p[5],p[7]],p[3],p.lineno(1))
 	else:
@@ -1014,11 +1120,11 @@ def p_arrayaux(p):
 		p[0] = p[1]
 
 def p_ingresarEnArreglo(p):
-	'''ingresarEnArreglo : ingresarEnArreglo TkCorcheteAbre arrayaux TkCorcheteCierra
+	'''ingresarEnArreglo : TkCorcheteAbre arrayaux TkCorcheteCierra ingresarEnArreglo
 						 | TkCorcheteAbre arrayaux TkCorcheteCierra'''
 	if len(p)>4:
 		print(p[3])
-		p[0] = Node('secuencia-accederEnArreglo',[p[1],p[3]],None,p.lineno(1))
+		p[0] = Node('secuencia-accederEnArreglo',[p[2],p[4]],None,p.lineno(1))
 	else:
 		print(p[2])
 		p[0] = p[2]
@@ -1255,7 +1361,7 @@ def buildtree2(node):
 			sting+=", value="+str(node.value)
 		if node.tipo_var:
 			sting+=", tipo_resultante="+node.tipo_var
-		sting+=")"
+		sting+=", linea="+str(node.linea)+")"
 		i=0
 		for child in node.children:
 			sting+="\n|_ hijo "+str(i)+": "
@@ -1637,9 +1743,11 @@ def decorateTree(node):
 				backup_lista_values_aux=lista_values_aux.copy()
 				lista_diccionarios_aux.append(diccionario)
 				lista_values_aux.append(valores)
+				print("comienza el ciclo con la var de contro igual a "+str(start))
 				i = start
 				while i <= stop:
-					print(str(i))
+					print("la var de control tiene valor "+str(i))
+					valores[str(node.children[0])] = i
 					decorateTree(node.children[len(node.children)-1])
 					print(lista_diccionarios_aux)
 					print(lista_values_aux)
@@ -1699,10 +1807,38 @@ def decorateTreeDeclaracion(node):
 	else:
 		print(node)
 
+def fixLineaNodeAsignacion(node):
+	if node==None:
+		return
+	if isinstance(node,Node):
+		if "asignacion" in node.type:
+			if node.linea == 0:
+				for child in node.children:
+					if isinstance(child,Node):
+						node.linea = child.linea
+						return
+		for child in node.children:
+			if isinstance(child,Node) and "asignacion" in child.type and child.linea==0:
+				if "comienzo" in node.type:
+					temp = node.children[0]
+					if isinstance(temp,Node) and "declaracion" in temp.type:
+						temp2 = temp
+						while isinstance(temp2,Node):
+							temp = temp2
+							temp2 = temp.children[len(temp.children)-1]
+					child.linea = temp.linea + 2
+				else:
+					child.linea = node.linea + 1
+			if isinstance(child,Node) and "declaracion" in child.type:
+				pass
+			else:
+				fixLineaNodeAsignacion(child)
+
 lexer.lineno=1
 
 yacc.yacc()
 y = yacc.parse(data)
+fixLineaNodeAsignacion(y)
 if print_tokens_or_errors()==0: ####Falta formato de errores
 	p = buildtree(y)
 	if p=="":
@@ -1724,6 +1860,6 @@ if print_tokens_or_errors()==0: ####Falta formato de errores
 			x = buildtree2(y)
 			print(x)
 			if len(errores_contexto)!=0:
-				errores_contexto = list(reversed(errores_contexto))
+				#errores_contexto.reverse()
 				for error in errores_contexto:
 					print(error)
