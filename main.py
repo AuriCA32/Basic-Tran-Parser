@@ -287,6 +287,9 @@ def __getListArrayType__(node):
 # 	[i][j][k]...(type) con i,j,k... enteros y type = ("bool"|"int"|"char")
 def __getArrayTypeString__(node):
 	types = __getListArrayType__(node)
+	return __getArrayTypeStringAux__(types)
+
+def __getArrayTypeStringAux__(types):
 	string=""
 	for i in types:
 		if isinstance(i,int):
@@ -354,6 +357,7 @@ def __getDetailsFromDeclaration__(strDeclaracion):
 			temp[p] = i.strip("(")
 	return temp
 
+# Chequea si, dado un nodo accederEnArreglo, los datos son válidos.
 def __checkReturnArrayElement__(node):
 	detailsArrayElement = __getListArrayType__(node)
 	numerrores = len(errores_contexto)
@@ -405,6 +409,9 @@ def __checkReturnArrayElement__(node):
 		return None
 	return [valores,arrayname,detailsArrayElement,detailsfromDeclaration,tipeofarray]
 
+# Para una asignacion, toma la lista de parametros de la función anterior, el hijo
+#	derecho de la asignación y el numero de linea de la asignacion para entrar en
+#	el arreglo y modificar dicho arreglo en el diccionario de no haber errores
 def __modifyArray__(listofparameters,node,linea):
 	print("se va modificar el arreglo")
 	[valoresArray,arrayname,detailsArrayElement,detailsfromDeclaration,tipeofarray] = listofparameters
@@ -472,7 +479,13 @@ def __modifyArray__(listofparameters,node,linea):
 		temp = temp[i]
 	# Se modifica el valor
 	temp[detailsArrayElement[0]] = nodevalue
+	print("se ha modificado el valor con exito")
+	print(str(lista_diccionarios_aux))
+	print(str(lista_values_aux))
 	return
+
+# En vista de que algunos valores bool se agregar al diccionario como
+#	strings, esta funcion los cambia a su equivalente en python bool
 def __fixBoolValuesInDict__(diccionario,valores):
 	for i in diccionario.keys():
 		if diccionario[i]=="bool":
@@ -480,6 +493,36 @@ def __fixBoolValuesInDict__(diccionario,valores):
 				valores[i]=True
 			elif valores[i]=="false":
 				valores[i]=False
+
+def __getArrayValue__(node):
+	# se consiguen todas las especificaciones del nodo
+	temp=__checkReturnArrayElement__(node)
+	print("las especificaciones del nodo son "+str(temp))
+	if temp==None: # Si hubo un error
+		return None
+	# unpack values
+	[valoresArray,arrayname,detailsArrayElement,detailsfromDeclaration,tipeofarray] = temp
+	final = valoresArray[str(arrayname)]
+	# conseguir el tipo resultante
+	resultingtype = None
+	if len(detailsArrayElement)==len(detailsfromDeclaration):
+		# se accede hasta el fondo
+		resultingtype=tipeofarray
+	else:
+		# se accede a un subarray
+		temp = len(detailsfromDeclaration) - (len(detailsfromDeclaration) - len(detailsArrayElement))
+		detailsfromDeclaration = detailsfromDeclaration[temp:len(detailsfromDeclaration)]
+		detailsfromDeclaration.append(tipeofarray)
+		resultingtype="array"+__getArrayTypeStringAux__(detailsfromDeclaration)
+	# Se accede en el arreglo para conseguir el valor
+	detailsArrayElement.reverse()
+	while detailsArrayElement:
+		print(final)
+		print(detailsArrayElement)
+		i = detailsArrayElement.pop()
+		final = final[i]
+	# Retornar valor y tipo de donde se ha accedido
+	return [final,resultingtype]
 
 #Crea el arbol
 class Node:
@@ -1196,7 +1239,7 @@ def p_cond(p):
 		elif p[5]==";":
 			NodoInterno = Node('accederEnArreglo',[p[1],p[2]],"[",p.lineno(3))
 			Nodo = Node('asignacion',[NodoInterno,p[4]],p[3],p.lineno(2))
-			if len(p)>8:
+			if len(p)>6:
 				p[0] = Node('secuencia',[Nodo,p[6]],None,p.lineno(1))
 			else:
 				p[0] = Nodo
@@ -1260,7 +1303,7 @@ def p_operacion(p):
 				  | operacion TkMayorIgual operacion
 				  | operacion TkConcatenacion operacion
 				  | TkShift operacion
-				  | operacion ingresarEnArreglo
+				  | TkId ingresarEnArreglo
 				  | operacion TkSiguienteCar
 				  | operacion TkAnteriorCar
 				  | TkValorAscii operacion
@@ -1316,6 +1359,7 @@ def p_operacion(p):
 		elif p[1]=="$":
 			p[0] = Node('shift',[p[2]],p[1],p.lineno(1))
 		else:
+			print("creado acceder en arreglo para "+str(p))
 			p[0] = Node('accederEnArreglo',[p[1],p[2]],"[",p.lineno(1))
 	else:
 		p[0] = p[1]
@@ -1657,6 +1701,14 @@ def decorateTree(node):
 		print("\n**decorando nodo de tipo " + node.type)
 		if len(node.children)!=0:
 			if "accederEnArreglo" in node.type:
+				temp = __getArrayValue__(node)
+				if temp!=None:
+					print("se ha accedido en un arreglo y se obtuvo: "+str(temp))
+					[node.value,node.tipo_var] = temp
+					p = buildtree2(node)
+					print(p)
+				else:
+					print("Error accediendo en el arreglo.")
 				return
 			if "condicional" in node.type:
 				print("el nodo es un condicional")
