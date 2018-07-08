@@ -725,6 +725,7 @@ class Node:
 		print(value_hijo)
 		print("lista de tipos de los hijos")
 		print(type_hijo)
+
 		#Si el value de algun hijo es None, no se puede realizar la operacion
 		for hijo in value_hijo:
 			if hijo=="None" and "asignacion" not in self.type:
@@ -759,6 +760,9 @@ class Node:
 						self.value=value_hijo[0]*value_hijo[1]
 
 					elif "division" in self.type:
+						if value_hijo[1]==0:
+							print("Error: división por cero en la línea "+str(self.linea)+".")
+							exit()
 						self.value=value_hijo[0]//value_hijo[1]
 
 					elif "modulo" in self.type:
@@ -834,8 +838,13 @@ class Node:
 
 			elif self.type in arreglo and self.type!="shift":
 				if ("array" in type_hijo[0]) and ("array" in type_hijo[1]):
-					if type_hijo[0]==type_hijo[1]:
-						self.tipo_var=type_hijo[0]
+					#Hay que ver que ambos sean del mismo tipo
+					tipo=type_hijo[0][len(type_hijo[0])-5:].strip("()")
+					tipo2=type_hijo[1][len(type_hijo[1])-5:].strip("()")
+					if tipo==tipo2:
+						n=int(type_hijo[0][:len(type_hijo[0])-5].strip("array[]"))
+						n1=int(type_hijo[1][:len(type_hijo[1])-5].strip("array[]"))
+						self.tipo_var="array["+str(n+n1)+"]("+tipo+")"
 					else:
 						errores_contexto.append("Error: operación sobre tipos de arreglos incompatibles en la línea "+str(self.linea)+".")
 						while diccionario_aux and valores_aux:
@@ -855,13 +864,12 @@ class Node:
 					return
 				
 				if "concatenacion" in self.type:
-					pass
-				#NO ESTOY CLARA COMO MANEJAR ESTO, hay que poner value
+					self.value = value_hijo[0]+value_hijo[1]
 				elif "arrayInterno" in self.type:
 					pass
 				elif "rango" in self.type:
 					pass
-				elif "secuencia" in self.type: #CREO QUE ESTO NO SE MANEJA AQUI
+				elif "secuencia" in self.type:
 					pass
 				else:
 					print("ERROR5")
@@ -908,7 +916,6 @@ class Node:
 						lista_diccionarios_aux.append(diccionario)
 						lista_values_aux.append(valores)
 					return
-				
 				else:
 					print("ERRORCITO")
 					errores_contexto.append("Error: operación asignación sobre tipos incompatibles en la línea "+str(self.linea)+".")
@@ -941,7 +948,7 @@ class Node:
 		elif len(type_hijo)==1: #shift, caracter, menosUnario, negacion
 			
 			if self.type in operacion:
-				type_hijo[0].strip("array-")
+				#type_hijo[0].strip("array")
 				self.tipo_var=type_hijo[0]
 				#AQUI SE REALIZAN LAS OPERACIONES
 				if self.tipo_var=="int":
@@ -979,7 +986,7 @@ class Node:
 
 			elif self.type=="shift":
 				if "array" in type_hijo[0]:
-					self.type=type_hijo[0]
+					self.tipo_var=type_hijo[0]
 				else:
 					errores_contexto.append("Error: operación sobre tipo de variable incompatible en la línea "+str(self.linea)+".")
 					while diccionario_aux and valores_aux:
@@ -989,11 +996,13 @@ class Node:
 						lista_values_aux.append(valores)
 					return
 
-				##HACERLE SHIFT AL ARREGLO EN value_hijos[0]
+				self.value=value_hijo[0].copy()
+				for i in range(len(value_hijo[0])):
+					self.value[i]=value_hijo[0][(i-1)%len(value_hijo[0])]
 				
 			elif self.type in caracter:
-				if "array" in type_hijo[0]:
-					type_hijo[0].strip("array-")
+				if "array" in type_hijo[0]: #####REVISAR
+					type_hijo[0].strip("array")
 				elif type_hijo[0]=="char":
 					self.tipo_var=type_hijo[0]
 				else:
@@ -1039,6 +1048,7 @@ class Node:
 					lista_diccionarios_aux.append(diccionario)
 					lista_values_aux.append(valores)
 				return
+
 		print("el nodo de tipo "+self.type+" tiene value "+str(self.value)+" y tipo "+self.tipo_var)
 		#m = buildtree(self)
 		#print(m)

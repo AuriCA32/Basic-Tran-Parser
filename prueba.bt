@@ -1,10 +1,15 @@
 with
-    var x <- 4+(6*2), y<-9 : int
-    var p : array[3] of array[2] of int
-    var z : array[2] of int
-    var m <- true : bool
+    var i <- 1, n : int
+    var z : array[3] of int
+    var b : array[3] of int
 begin
-    p[0][1] <- 1;
-    x <- p[0][1];
-    y <- 21;
+    z[0] <- 2;
+    z[1] <- 3;
+    z[2] <- 4;
+    b <- $z;
+    n <- i + z[0];
+    n <- b[0] + 1;
+    n <- b[0] + z[0];
+    n <- b[0] + z[0] + i;
+    
 end
