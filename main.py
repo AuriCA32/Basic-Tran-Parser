@@ -515,6 +515,7 @@ def __getArrayValue__(node):
 		detailsfromDeclaration.append(tipeofarray)
 		resultingtype="array"+__getArrayTypeStringAux__(detailsfromDeclaration)
 	# Se accede en el arreglo para conseguir el valor
+	print("el tipo resultante conseguido es "+ str(resultingtype))
 	detailsArrayElement.reverse()
 	while detailsArrayElement:
 		print(final)
@@ -575,13 +576,13 @@ class Node:
 						decorateTreeDeclaracion(self.children[1])
 						y = buildtree(self.children[1])
 						print(y)
-						values[str(self.children[0])]=str(self.children[1].value)
+						values[str(self.children[0])]=self.children[1].value
 					else:
 						print("el segundo nodo es un terminal")
 						if "declaracionArray" in self.type:
 							values[str(self.children[0])]=__getArrayFromDeclaration__(self)
 						else:
-							values[str(self.children[0])]=str(self.children[1])
+							values[str(self.children[0])]=self.children[1]
 					if str(self.children[0]) in diccionario.keys():
 						repetidas.append([str(self.children[0]),self.linea])
 					if "declaracionArray" in self.type:
@@ -609,11 +610,11 @@ class Node:
 								repetidas.append([str(node.children[0]),self.linea])
 							if isinstance(node.children[1],Node):
 								print("el hijo derecho de la asignacion es un arbol")
-								values[str(node.children[0])]=str(node.children[1].value)
+								values[str(node.children[0])]=node.children[1].value
 								diccionario[str(node.children[0])]=node.children[1].tipo_var
 							else:
 								print("el hijo derecho de la asignacion es un terminal")
-								values[str(node.children[0])]=str(node.children[1])
+								values[str(node.children[0])]=node.children[1]
 								if isinstance(node.children[1],int):
 									diccionario[str(node.children[0])]="int"
 								elif node.children[1] in ['true','false']:
@@ -675,10 +676,7 @@ class Node:
 								type_hijo.append(diccionario[self.children[i]])
 								if diccionario[self.children[i]] == "int":
 									if not isDeclaracion:
-										try:
-											value_hijo.append(int(valores[self.children[i]]))
-										except:
-											value_hijo.append(str(valores[self.children[i]]))
+										value_hijo.append(valores[self.children[i]])
 									else:
 										value_hijo.append("None")
 								else:
@@ -898,12 +896,12 @@ class Node:
 				if not isDeclaracion and type_hijo[0]==type_hijo[1]:
 					self.tipo_var=type_hijo[1]
 					if isinstance(self.children[1],Node):
-						valores[str(self.children[0])]=str(self.children[1].value)
+						valores[str(self.children[0])]=self.children[1].value
 					else:
 						if self.children[0]!=None and self.children[1]!=None:
 							if isinstance(self.children[1],str):
 								if self.children[1]=="true" or self.children[1]=="false" or "\"" in self.children[1] or "\'" in self.children[1]:
-									valores[str(self.children[0])]=str(self.children[1])
+									valores[str(self.children[0])]=self.children[1]
 									__fixBoolValuesInDict__(diccionario,valores)
 								else:
 									valores[str(self.children[0])]=valores2[str(self.children[1])]
@@ -1992,14 +1990,15 @@ y = yacc.parse(data)
 fixLineaNodeAsignacion(y)
 if print_tokens_or_errors()==0: ####Falta formato de errores
 	p = buildtree(y)
+	x = buildtree2(y)
 	if p=="":
 		print("No se ha generado el árbol.")
 	else:
 		if len(sys.argv)>2 and sys.argv[2]=="-b":
-			print(p)
+			pass
+			print(x)
 		else:
-			print(p)
-			x = buildtree2(y)
+			#print(p)
 			print(x)
 			decorateTree(y)
 			print(lista_diccionarios)
@@ -2007,7 +2006,7 @@ if print_tokens_or_errors()==0: ####Falta formato de errores
 			print(lista_repetidas_aux)
 			redeclaracion()
 			p = buildtree(y)
-			print(p)
+			#print(p)
 			x = buildtree2(y)
 			print(x)
 			if len(errores_contexto)!=0:
