@@ -361,6 +361,7 @@ def __getDetailsFromDeclaration__(strDeclaracion):
 # Chequea si, dado un nodo accederEnArreglo, los datos son válidos.
 def __checkReturnArrayElement__(node):
 	detailsArrayElement = __getListArrayType__(node)
+	aux = detailsArrayElement.copy()
 	numerrores = len(errores_contexto)
 	print("la lista obtenida es "+str(detailsArrayElement))
 	for p in range(len(detailsArrayElement)):
@@ -399,9 +400,12 @@ def __checkReturnArrayElement__(node):
 	tipeofarray = detailsfromDeclaration.pop()
 	print("Los detalles obtenidos de la declaracion son "+str(detailsfromDeclaration))
 	for i in range(len(detailsArrayElement)):
-		if detailsArrayElement[i] >= detailsfromDeclaration[i]:
+		if detailsArrayElement[i] >= detailsfromDeclaration[i] or detailsArrayElement[i]<0:
 			print("Index del array out of range.")
-			errores_contexto.append("Error: Index fuera de rango. Linea No. "+str(node.linea)+".")
+			errores_contexto.append("Error: Index \""+str(aux[i+1])+"\" fuera de rango. Linea No. "+str(node.linea)+".")
+			for p in errores_contexto:
+				print(p)
+			exit()
 	if len(detailsArrayElement)>len(detailsfromDeclaration):
 		print("se está intentando acceder en arreglos internos que no existen")
 		errores_contexto.append("Error: Se intenta acceder a arreglos internos que no existen. Linea No. "+str(node.linea)+".")
@@ -731,8 +735,6 @@ class Node:
 			if (hijo=="None" or hijo==None) and "asignacion" not in self.type:
 				errores_contexto.append("Error: Variable "+self.children[i]+" no inicializada, línea "+str(self.linea)+".")
 				for p in errores_contexto:
-					z = buildtree2(y)
-					print(z)
 					print(p)
 				exit()
 		
