@@ -1,15 +1,19 @@
 with
-    var i <- 1, n : int
+    var i <- 1, n, p  : int
     var z : array[3] of int
     var b : array[3] of int
 begin
+    p<- p + 1;
+    p<- -1;
     z[0] <- 2;
     z[1] <- 3;
     z[2] <- 4;
+    z[p] <- 4;
     b <- $z;
     n <- i + z[0];
     n <- b[0] + 1;
     n <- b[0] + z[0];
     n <- b[0] + z[0] + i;
+    
     
 end

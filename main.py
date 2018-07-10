@@ -176,10 +176,11 @@ def print_tokens_or_errors():
 	if(len(errores_sintacticos)>0):
 		print(errores_sintacticos[0])
 		return -1
-	return 0
+	
 	# else:
-	# 	for i in range(len(tokensList)):
-	# 		print(tokensList[i])
+	#  	for i in range(len(tokensList)):
+	#  		print(tokensList[i])
+	return 0
 
 #Funcion que lee un archivo y lo retorna como string
 def read_given_file(gfile):
@@ -725,10 +726,15 @@ class Node:
 		print(type_hijo)
 
 		#Si el value de algun hijo es None, no se puede realizar la operacion
-		for hijo in value_hijo:
-			if hijo=="None" and "asignacion" not in self.type:
-				errores_contexto.append("Error: No se puede realizar la operación \""+self.type+"\" sobre variable con valor None en la línea "+str(self.linea)+".")
-				return
+		for i in range(len(value_hijo)):
+			hijo = value_hijo[i]
+			if (hijo=="None" or hijo==None) and "asignacion" not in self.type:
+				errores_contexto.append("Error: Variable "+self.children[i]+" no inicializada, línea "+str(self.linea)+".")
+				for p in errores_contexto:
+					z = buildtree2(y)
+					print(z)
+					print(p)
+				exit()
 		
 		if len(type_hijo)==2: #operaciones y arreglo sin shift
 
@@ -1356,7 +1362,7 @@ def p_operacion(p):
 	elif len(p)==3:
 		if p[1]=="-":
 			p[0] = Node('operacion-menosUnario',[p[2]],p[1],p.lineno(1))
-		if p[1]=="not":
+		elif p[1]=="not":
 			p[0] = Node('operacion-negacion',[p[2]],p[1],p.lineno(1))
 		elif p[2]=="++":
 			p[0] = Node('siguienteChar',[p[1]],p[2],p.lineno(1))
@@ -1367,7 +1373,6 @@ def p_operacion(p):
 		elif p[1]=="$":
 			p[0] = Node('shift',[p[2]],p[1],p.lineno(1))
 		else:
-			print("creado acceder en arreglo para "+str(p))
 			p[0] = Node('accederEnArreglo',[p[1],p[2]],"[",p.lineno(1))
 	else:
 		p[0] = p[1]
