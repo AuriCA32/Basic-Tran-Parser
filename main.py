@@ -263,6 +263,11 @@ lista_diccionarios_aux=deque([])
 lista_values_aux=deque([])
 altura = 0
 errorFor = False
+verboso = False
+
+def printV(string):
+	if verboso:
+		print(string)
 
 def __getVarType__(node):
 	if isinstance(node,Node) and "declaracion" in node.type:
@@ -363,54 +368,54 @@ def __checkReturnArrayElement__(node):
 	detailsArrayElement = __getListArrayType__(node)
 	aux = detailsArrayElement.copy()
 	numerrores = len(errores_contexto)
-	print("la lista obtenida es "+str(detailsArrayElement))
+	printV("la lista obtenida es "+str(detailsArrayElement))
 	for p in range(len(detailsArrayElement)):
 		i = detailsArrayElement[p]
-		print("trabajando con " + str(i))
+		printV("trabajando con " + str(i))
 		if isinstance(i,str) and i!="true" and i!="false" and "\"" not in i and "\'" not in i:
-			print("es un id")
+			printV("es un id")
 			[diccionario,valores] = __searchElementinDictReturnDict__(i)
 			if diccionario==None:
-				print("no está en el diccionario")
+				printV("no está en el diccionario")
 				errores_contexto.append("Error: variable "+i+" no declarada, línea "+str(node.linea)+".")
 				if p==0:
 					break
 			elif diccionario!=None and p!=0 and diccionario[str(i)]!="int":
-				print("Está en el diccionario pero no es int")
+				printV("Está en el diccionario pero no es int")
 				errores_contexto.append("Error: El acceso a una posición del arreglo "+detailsArrayElement[0]+" sólo es posible con variables de tipo int, pero se encontró "+str(i)+" de tipo "+diccionario[str(i)]+". Linea No. "+str(node.linea)+".")
 			elif diccionario!=None and p!=0 and diccionario[str(i)]=="int":
-				print("Está en el dict y es int")
+				printV("Está en el dict y es int")
 				detailsArrayElement[p] = valores[str(i)]
 		elif isinstance(i,str) and (i=="true" or i=="false"):
-			print("es un bool")
+			printV("es un bool")
 			errores_contexto.append("Error: El acceso a una posición del arreglo "+detailsArrayElement[0]+" sólo es posible con variables de tipo int, pero se encontró "+str(i)+" de tipo bool. Linea No. "+str(node.linea)+".")
 		elif isinstance(i,str) and ("\"" in i or "\'" in i):
-			print("es un char")
+			printV("es un char")
 			errores_contexto.append("Error: El acceso a una posición del arreglo "+detailsArrayElement[0]+" sólo es posible con variables de tipo int, pero se encontró "+str(i)+" de tipo char. Linea No. "+str(node.linea)+".")
-	print("la lista actualizada es "+str(detailsArrayElement))
+	printV("la lista actualizada es "+str(detailsArrayElement))
 	if len(errores_contexto)>numerrores:
-		print("Se generaron errores al acceder en el arreglo. Return")
+		printV("Se generaron errores al acceder en el arreglo. Return")
 		return None
 	detailsArrayElement.reverse()
 	arrayname = detailsArrayElement.pop()
 	detailsArrayElement.reverse()
-	print("El nombre del arreglo es " + str(arrayname)+" y sus especificaciones aqui son "+str(detailsArrayElement))
+	printV("El nombre del arreglo es " + str(arrayname)+" y sus especificaciones aqui son "+str(detailsArrayElement))
 	[diccionario,valores] = __searchElementinDictReturnDict__(arrayname)
 	detailsfromDeclaration = __getDetailsFromDeclaration__(diccionario[str(arrayname)])
 	tipeofarray = detailsfromDeclaration.pop()
-	print("Los detalles obtenidos de la declaracion son "+str(detailsfromDeclaration))
+	printV("Los detalles obtenidos de la declaracion son "+str(detailsfromDeclaration))
 	for i in range(len(detailsArrayElement)):
 		if detailsArrayElement[i] >= detailsfromDeclaration[i] or detailsArrayElement[i]<0:
-			print("Index del array out of range.")
+			printV("Index del array out of range.")
 			errores_contexto.append("Error: Index \""+str(aux[i+1])+"\" fuera de rango. Linea No. "+str(node.linea)+".")
 			for p in errores_contexto:
 				print(p)
 			exit()
 	if len(detailsArrayElement)>len(detailsfromDeclaration):
-		print("se está intentando acceder en arreglos internos que no existen")
+		printV("se está intentando acceder en arreglos internos que no existen")
 		errores_contexto.append("Error: Se intenta acceder a arreglos internos que no existen. Linea No. "+str(node.linea)+".")
 	if len(errores_contexto)>numerrores:
-		print("Se generaron errores al acceder en el arreglo. Return")
+		printV("Se generaron errores al acceder en el arreglo. Return")
 		return None
 	return [valores,arrayname,detailsArrayElement,detailsfromDeclaration,tipeofarray]
 
@@ -418,53 +423,53 @@ def __checkReturnArrayElement__(node):
 #	derecho de la asignación y el numero de linea de la asignacion para entrar en
 #	el arreglo y modificar dicho arreglo en el diccionario de no haber errores
 def __modifyArray__(listofparameters,node,linea):
-	print("se va modificar el arreglo")
+	printV("se va modificar el arreglo")
 	[valoresArray,arrayname,detailsArrayElement,detailsfromDeclaration,tipeofarray] = listofparameters
 	numerrores = len(errores_contexto)
 	if isinstance(node,str):
-		print("el hijo izquierdo es un string")
+		printV("el hijo izquierdo es un string")
 		if node=="true" or node=="false":
-			print("es un bool")
+			printV("es un bool")
 			nodetype = "bool"
 			nodevalue = node
 		elif "\"" in node or "\'" in node:
-			print("es un char")
+			printV("es un char")
 			nodetype = "char"
 			nodevalue = node
 		else:
-			print("es un id")
+			printV("es un id")
 			[dictnode,valnode]=__searchElementinDictReturnDict__(node)
 			if dictnode==None:
 				errores_contexto.append("Error: variable "+node+" no declarada, línea "+str(linea)+".")
 			nodetype = dictnode[str(node)]
 			nodevalue = valnode[str(node)]
 	elif isinstance(node,int):
-		print("el hijo izquierdo es un int")
+		printV("el hijo izquierdo es un int")
 		nodetype = "int"
 		nodevalue = node
 	else: #es una instancia de la clase nodo
-		print("el hijo izquierdo es un nodo")
+		printV("el hijo izquierdo es un nodo")
 		nodetype = node.tipo_var
 		nodevalue = node.value
 		linea = node.linea
-	print("el hijo izq es de tipo "+str(nodetype)+" y tiene valor "+str(nodevalue))
-	print("el hijo derecho tiene tipo "+str(tipeofarray))
+	printV("el hijo izq es de tipo "+str(nodetype)+" y tiene valor "+str(nodevalue))
+	printV("el hijo derecho tiene tipo "+str(tipeofarray))
 	if len(detailsArrayElement)==len(detailsfromDeclaration):
-		print("Coincide el acceso con lo que dice la declaración")
+		printV("Coincide el acceso con lo que dice la declaración")
 		if nodetype!=tipeofarray:
-			print("ERROR-array")
+			printV("ERROR-array")
 			errores_contexto.append("Error: operación asignación sobre tipos incompatibles en la línea "+str(linea)+".")
 	else:
-		print("El hijo izquierdo tiene que ser arreglo porque el derecho no llega al fondo")
+		printV("El hijo izquierdo tiene que ser arreglo porque el derecho no llega al fondo")
 		#el otro lado tiene que ser un arreglo y del mismo tipo
 		nodetypelist = __getDetailsFromDeclaration__(nodetype)
-		print("los detalles del hijo izq son "+str(nodetypelist))
+		printV("los detalles del hijo izq son "+str(nodetypelist))
 		nodetype = nodetypelist.pop()
 		temp = len(detailsfromDeclaration) - (len(detailsfromDeclaration) - len(detailsArrayElement))
 		detailsfromDeclaration = detailsfromDeclaration[temp:len(detailsfromDeclaration)]
-		print(detailsfromDeclaration)
+		printV(detailsfromDeclaration)
 		if nodetype!=tipeofarray or len(detailsfromDeclaration)!=len(nodetypelist):
-			print("ERROR-array2")
+			printV("ERROR-array2")
 			errores_contexto.append("Error: operación asignación sobre tipos incompatibles en la línea "+str(linea)+".")
 		else:
 			for i in range(len(nodetypelist)):
@@ -472,7 +477,7 @@ def __modifyArray__(listofparameters,node,linea):
 					errores_contexto.append("Error: operación asignación sobre tipos incompatibles en la línea "+str(linea)+".")
 					break
 	if len(errores_contexto)>numerrores:
-		print("Se generaron errores al modificar el arreglo. Return")
+		printV("Se generaron errores al modificar el arreglo. Return")
 		return
 	temp = valoresArray[str(arrayname)]
 	detailsArrayElement.reverse()
@@ -484,9 +489,9 @@ def __modifyArray__(listofparameters,node,linea):
 		temp = temp[i]
 	# Se modifica el valor
 	temp[detailsArrayElement[0]] = nodevalue
-	print("se ha modificado el valor con exito")
-	print(str(lista_diccionarios_aux))
-	print(str(lista_values_aux))
+	printV("se ha modificado el valor con exito")
+	printV(str(lista_diccionarios_aux))
+	printV(str(lista_values_aux))
 	return
 
 # En vista de que algunos valores bool se agregar al diccionario como
@@ -502,7 +507,7 @@ def __fixBoolValuesInDict__(diccionario,valores):
 def __getArrayValue__(node):
 	# se consiguen todas las especificaciones del nodo
 	temp=__checkReturnArrayElement__(node)
-	print("las especificaciones del nodo son "+str(temp))
+	printV("las especificaciones del nodo son "+str(temp))
 	if temp==None: # Si hubo un error
 		return None
 	# unpack values
@@ -520,11 +525,11 @@ def __getArrayValue__(node):
 		detailsfromDeclaration.append(tipeofarray)
 		resultingtype="array"+__getArrayTypeStringAux__(detailsfromDeclaration)
 	# Se accede en el arreglo para conseguir el valor
-	print("el tipo resultante conseguido es "+ str(resultingtype))
+	printV("el tipo resultante conseguido es "+ str(resultingtype))
 	detailsArrayElement.reverse()
 	while detailsArrayElement:
-		print(final)
-		print(detailsArrayElement)
+		printV(final)
+		printV(detailsArrayElement)
 		i = detailsArrayElement.pop()
 		final = final[i]
 	# Retornar valor y tipo de donde se ha accedido
@@ -553,37 +558,37 @@ class Node:
 		lista_values_aux.append(values)
 
 	def __recorrerDeclaraciones__(self,diccionario,repetidas,values):	
-		print("entro")
-		print("diccionario")
-		print(diccionario)
-		print("valores")
-		print(values)
+		printV("entro")
+		printV("diccionario")
+		printV(diccionario)
+		printV("valores")
+		printV(values)
 		if self==None:
 			return diccionario,repetidas,values
 		if isinstance(self,Node):
-			print(self.type)
-			print(self.children)
+			printV(self.type)
+			printV(self.children)
 			if "declaracion" in self.type:
-				print("Declaracion en tipo")
+				printV("Declaracion en tipo")
 				for child in self.children:
 					if isinstance(child,Node) and "declaracion" in child.type:
 						diccionario,repetidas,values = child.__recorrerDeclaraciones__(diccionario,repetidas,values)
 					if isinstance(child,Node) and "asignacion" in self.type:
-						print("asignacion en algun tipo de algun hijo")
+						printV("asignacion en algun tipo de algun hijo")
 						values[str(child.children[0])]=str(child.children[1])
 						if str(child.children[0]) in diccionario.keys():
 							repetidas.append([str(child.children[0]),child.linea])
 						diccionario[str(child.children[0])]=__getVarType__(self)
 				if len(self.children)==3:
-					print("longitud de arreglo de hijos igual a 3")
+					printV("longitud de arreglo de hijos igual a 3")
 					if isinstance(self.children[1],Node):
-						print("el segundo hijo es un nodo, es una expresion larga")
+						printV("el segundo hijo es un nodo, es una expresion larga")
 						decorateTreeDeclaracion(self.children[1])
 						y = buildtree(self.children[1])
-						print(y)
+						printV(y)
 						values[str(self.children[0])]=self.children[1].value
 					else:
-						print("el segundo nodo es un terminal")
+						printV("el segundo nodo es un terminal")
 						if "declaracionArray" in self.type:
 							values[str(self.children[0])]=__getArrayFromDeclaration__(self)
 						else:
@@ -595,30 +600,30 @@ class Node:
 					else:
 						diccionario[str(self.children[0])]=__getVarType__(self.children[2])
 				else:
-					print("longitud de arreglo de hijos diferente a 3")
+					printV("longitud de arreglo de hijos diferente a 3")
 					if not isinstance(self.children[0],Node):
-						print("el hijo izq no es un nodo")
+						printV("el hijo izq no es un nodo")
 						values[str(self.children[0])]=None
 						if str(self.children[0]) in diccionario.keys():
 							repetidas.append([str(self.children[0]),self.linea])
 						diccionario[str(self.children[0])]=__getVarType__(self.children[1])
 					else:
-						print("el hijo izq es un nodo")
+						printV("el hijo izq es un nodo")
 						if "asignacion" in self.children[0].type:
-							print("el hijo izquierdo es una asignacion")
+							printV("el hijo izquierdo es una asignacion")
 							node = self.children[0]
-							print("se decora el mini arbol de asignacion")
+							printV("se decora el mini arbol de asignacion")
 							decorateTreeDeclaracion(node)
 							p=buildtree(node)
-							print(p)
+							printV(p)
 							if str(node.children[0]) in diccionario.keys():
 								repetidas.append([str(node.children[0]),self.linea])
 							if isinstance(node.children[1],Node):
-								print("el hijo derecho de la asignacion es un arbol")
+								printV("el hijo derecho de la asignacion es un arbol")
 								values[str(node.children[0])]=node.children[1].value
 								diccionario[str(node.children[0])]=node.children[1].tipo_var
 							else:
-								print("el hijo derecho de la asignacion es un terminal")
+								printV("el hijo derecho de la asignacion es un terminal")
 								values[str(node.children[0])]=node.children[1]
 								if isinstance(node.children[1],int):
 									diccionario[str(node.children[0])]="int"
@@ -626,19 +631,21 @@ class Node:
 									diccionario[str(node.children[0])]="bool"
 								else:
 									diccionario[str(node.children[0])]="char"
-		print("salio")
+		printV("salio")
 		__fixBoolValuesInDict__(diccionario, values)
-		print("diccionario")
-		print(diccionario)
-		print("values")
-		print(values)
+		printV("diccionario")
+		printV(diccionario)
+		printV("values")
+		printV(values)
 		return diccionario,repetidas,values
 
 	def calc_tipo(self,isDeclaracion):
+		m = buildtree2(self)
+		printV(m)
 		global errorFor
 		#Vemos los hijos y sus tipos 
-		print("calc type del nodo "+self.type)
-		print("isDeclaracion "+str(isDeclaracion) )
+		printV("calc type del nodo "+self.type)
+		printV("isDeclaracion "+str(isDeclaracion) )
 		diccionario_aux=deque([])
 		valores_aux=deque([])
 		value_hijo=[]
@@ -668,8 +675,8 @@ class Node:
 					type_hijo.append("char")
 				else: 
 					if not isDeclaracion:
-						print("Buscando "+self.children[i] + "en el diccionario")
-						print(lista_diccionarios_aux)
+						printV("Buscando "+self.children[i] + "en el diccionario")
+						printV(lista_diccionarios_aux)
 						#Buscamos en la tabla de simbolos la variable 
 						declarada=False
 						while lista_diccionarios_aux and lista_values_aux:
@@ -694,7 +701,7 @@ class Node:
 									diccionario1=diccionario
 									valores1=valores
 								break
-						print("var declarada " +str(declarada))
+						printV("var declarada " +str(declarada))
 						while diccionario_aux and valores_aux:
 							diccionario = diccionario_aux.popleft()
 							valores=valores_aux.popleft()
@@ -723,17 +730,17 @@ class Node:
 				lista_diccionarios_aux.append(diccionario)
 				lista_values_aux.append(valores)
 			return
-		print(self.type)
-		print("lista de values de los hijos")
-		print(value_hijo)
-		print("lista de tipos de los hijos")
-		print(type_hijo)
+		printV(self.type)
+		printV("lista de values de los hijos")
+		printV(value_hijo)
+		printV("lista de tipos de los hijos")
+		printV(type_hijo)
 
 		#Si el value de algun hijo es None, no se puede realizar la operacion
 		for i in range(len(value_hijo)):
 			hijo = value_hijo[i]
 			if (hijo=="None" or hijo==None) and "asignacion" not in self.type:
-				errores_contexto.append("Error: Variable "+self.children[i]+" no inicializada, línea "+str(self.linea)+".")
+				errores_contexto.append("Error: Variable \""+str(value_hijo[i])+"\" no inicializada, línea "+str(self.linea)+".")
 				for p in errores_contexto:
 					print(p)
 				exit()
@@ -741,7 +748,7 @@ class Node:
 		if len(type_hijo)==2: #operaciones y arreglo sin shift
 
 			if self.type in operacion:
-				print("aqui con " + self.type)
+				printV("aqui con " + self.type)
 				for hijo in type_hijo:
 					hijo.strip("array-")
 				
@@ -801,7 +808,7 @@ class Node:
 						self.value = value_hijo[0]>=value_hijo[1]
 						self.tipo_var = "bool"
 					else:
-						print("ERROR1")
+						printV("ERROR1")
 						errores_contexto.append("Error: operación sobre tipos de variables incompatibles en la línea "+str(self.linea)+".")
 						while diccionario_aux and valores_aux:
 							diccionario = diccionario_aux.popleft()
@@ -823,7 +830,7 @@ class Node:
 						self.value = value_hijo[0]!=value_hijo[1]
 
 					else:
-						print("ERROR2")
+						printV("ERROR2")
 						errores_contexto.append("Error: operación sobre tipos de variables incompatibles en la línea "+str(self.linea)+".")
 						while diccionario_aux and valores_aux:
 							diccionario = diccionario_aux.popleft()
@@ -833,7 +840,7 @@ class Node:
 						return
 
 				else:
-					print("ERROR3")
+					printV("ERROR3")
 					errores_contexto.append("Error: operación sobre tipos de variables incompatibles en la línea "+str(self.linea)+".")
 					while diccionario_aux and valores_aux:
 						diccionario = diccionario_aux.popleft()
@@ -860,7 +867,7 @@ class Node:
 							lista_values_aux.append(valores)
 						return
 				else:
-					print("ERROR4")
+					printV("ERROR4")
 					errores_contexto.append("Error: operación sobre tipos de variables incompatibles en la línea "+str(self.linea)+".")
 					while diccionario_aux and valores_aux:
 						diccionario = diccionario_aux.popleft()
@@ -878,7 +885,7 @@ class Node:
 				elif "secuencia" in self.type:
 					pass
 				else:
-					print("ERROR5")
+					printV("ERROR5")
 					errores_contexto.append("Error: operación sobre tipos de variables incompatibles en la línea "+str(self.linea)+".")
 					while diccionario_aux and valores_aux:
 						diccionario = diccionario_aux.popleft()
@@ -888,7 +895,7 @@ class Node:
 					return
 
 			elif "asignacion" in self.type:
-				print("type_hijo[0]==type_hijo[1]: "+str(type_hijo[0]==type_hijo[1]))
+				printV("type_hijo[0]==type_hijo[1]: "+str(type_hijo[0]==type_hijo[1]))
 				if diccionario!=None and "IsAForCicle" in diccionario.keys() and str(self.children[0])==valores["IsAForCicle"]:
 					errores_contexto.append("Error: no se puede modificar la variable de control "+str(self.children[0])+" de este ciclo; linea No. "+str(self.linea)+".")
 					errorFor=True
@@ -923,7 +930,7 @@ class Node:
 						lista_values_aux.append(valores)
 					return
 				else:
-					print("ERRORCITO")
+					printV("ERRORCITO")
 					errores_contexto.append("Error: operación asignación sobre tipos incompatibles en la línea "+str(self.linea)+".")
 					while diccionario_aux and valores_aux:
 						diccionario = diccionario_aux.popleft()
@@ -942,7 +949,7 @@ class Node:
 					lista_values_aux.append(valores)
 				return
 			else:
-				print("ERROR")
+				printV("ERROR")
 				errores_contexto.append("Error: operación asignación sobre tipos de variables incompatibles en la línea "+str(self.linea)+".")
 				while diccionario_aux and valores_aux:
 					diccionario = diccionario_aux.popleft()
@@ -1022,15 +1029,15 @@ class Node:
 
 				if self.tipo_var=="char":
 					if "anterior" in self.type:
-						print("Hace operacion anterior de char")
+						printV("Hace operacion anterior de char")
 						value_hijo[0]=value_hijo[0].strip("\'")
 						self.value="\'"+chr((ord(value_hijo[0])-1)%128)+"\'"
 					elif "siguiente" in self.type:
-						print("Hace operacion siguiente de char")
+						printV("Hace operacion siguiente de char")
 						value_hijo[0]=value_hijo[0].strip("\'")
 						self.value="\'"+chr((ord(value_hijo[0])+1)%128)+"\'"
 					elif "Ascii" in self.type:
-						print("Hace operacion ascii de char")
+						printV("Hace operacion ascii de char")
 						value_hijo[0]=value_hijo[0].strip("\'")
 						self.value=ord(value_hijo[0])
 						self.tipo_var="int"
@@ -1046,7 +1053,7 @@ class Node:
 			else:
 				if isDeclaracion:
 					return
-				print("ERROR6")
+				printV("ERROR6")
 				errores_contexto.append("Error: operación sobre tipos de variables incompatibles en la línea "+str(self.linea)+".")
 				while diccionario_aux and valores_aux:
 					diccionario = diccionario_aux.popleft()
@@ -1055,16 +1062,16 @@ class Node:
 					lista_values_aux.append(valores)
 				return
 
-		print("el nodo de tipo "+self.type+" tiene value "+str(self.value)+" y tipo "+self.tipo_var)
+		printV("el nodo de tipo "+self.type+" tiene value "+str(self.value)+" y tipo "+self.tipo_var)
 		#m = buildtree(self)
-		#print(m)
+		#printV(m)
 		while diccionario_aux and valores_aux:
 			diccionario = diccionario_aux.popleft()
 			valores=valores_aux.popleft()
 			lista_diccionarios_aux.append(diccionario)
 			lista_values_aux.append(valores)
-		print(lista_diccionarios_aux)
-		print(lista_values_aux)
+		printV(lista_diccionarios_aux)
+		printV(lista_values_aux)
 		return
 
 def p_program(p):
@@ -1196,10 +1203,8 @@ def p_ingresarEnArreglo(p):
 	'''ingresarEnArreglo : TkCorcheteAbre arrayaux TkCorcheteCierra ingresarEnArreglo
 						 | TkCorcheteAbre arrayaux TkCorcheteCierra'''
 	if len(p)>4:
-		print(p[3])
 		p[0] = Node('secuencia-accederEnArreglo',[p[2],p[4]],None,p.lineno(1))
 	else:
-		print(p[2])
 		p[0] = p[2]
 	
 def p_cond(p):
@@ -1713,20 +1718,20 @@ def decorateTree(node):
 	if node==None:
 		return
 	if isinstance(node,Node):
-		print("\n**decorando nodo de tipo " + node.type)
+		printV("\n**decorando nodo de tipo " + node.type)
 		if len(node.children)!=0:
 			if "accederEnArreglo" in node.type:
 				temp = __getArrayValue__(node)
 				if temp!=None:
-					print("se ha accedido en un arreglo y se obtuvo: "+str(temp))
+					printV("se ha accedido en un arreglo y se obtuvo: "+str(temp))
 					[node.value,node.tipo_var] = temp
 					p = buildtree2(node)
-					print(p)
+					printV(p)
 				else:
-					print("Error accediendo en el arreglo.")
+					printV("Error accediendo en el arreglo.")
 				return
 			if "condicional" in node.type:
-				print("el nodo es un condicional")
+				printV("el nodo es un condicional")
 				decorateTree(node.children[0])
 				tiporesult = None
 				valresultante = None
@@ -1751,7 +1756,7 @@ def decorateTree(node):
 				else: #es un nodo
 					tiporesult = node.children[0].tipo_var
 					valresultante = node.children[0].value
-				print("el valor de la variable es "+ str(valresultante))
+				printV("el valor de la variable es "+ str(valresultante))
 				if tiporesult!="bool":
 					errores_contexto.append("Error: La expresión en el \"while\" tiene que ser de tipo bool, pero se encontró "+str(tiporesult)+". Linea No. "+str(node.linea)+".")
 					return
@@ -1760,15 +1765,15 @@ def decorateTree(node):
 					return
 				else:
 					if valresultante==True:
-						print("entra por el condicional")
+						printV("entra por el condicional")
 						decorateTree(node.children[1])
 					else:
 						if "otherwise" in node.type:
-							print("el nodo es un condicional")
+							printV("el nodo es un condicional")
 							decorateTree(node.children[2])
 					return
 			if "while" in node.type:
-				print("el nodo es un while")
+				printV("el nodo es un while")
 				decorateTree(node.children[0])
 				tiporesult = None
 				valresultante = None
@@ -1793,7 +1798,7 @@ def decorateTree(node):
 				else: #es un nodo
 					tiporesult = node.children[0].tipo_var
 					valresultante = node.children[0].value
-				print("el valor de la variable es "+ str(valresultante))
+				printV("el valor de la variable es "+ str(valresultante))
 				if tiporesult!="bool":
 					errores_contexto.append("Error: La expresión en el \"while\" tiene que ser de tipo bool, pero se encontró "+str(tiporesult)+". Linea No. "+str(node.linea)+".")
 					return
@@ -1803,7 +1808,7 @@ def decorateTree(node):
 				else:
 					numrecursions = 0
 					while valresultante==True:
-						print("está en el ciclo while")
+						printV("está en el ciclo while")
 						decorateTree(node.children[1])
 						if isinstance(node.children[0],Node):
 							decorateTree(node.children[0])
@@ -1814,25 +1819,25 @@ def decorateTree(node):
 							errores_contexto.append("Error: Stack overflow en ciclo while. Linea No. "+str(node.linea)+".")
 							break
 						numrecursions+=1
-					print("salio del while")
+					printV("salio del while")
 					return
 			if "for" in node.type:
-				print("ciclo for")
+				printV("ciclo for")
 				y=buildtree(node)
-				print(y)
+				printV(y)
 				limit = len(node.children)-1
-				print("el numero de hijos es "+str(limit)+" + 1")
+				printV("el numero de hijos es "+str(limit)+" + 1")
 				valuesresult=[]
 				errortype = []
 				for i in range(1,limit):
-					print ("hijo "+str(i))
+					printV ("hijo "+str(i))
 					decorateTree(node.children[i])
 					if isinstance(node.children[i],int):
-						print("la rama es un entero")
+						printV("la rama es un entero")
 						valuesresult.append(node.children[i])
 					if isinstance(node.children[i],str):
-						print("la rama es un string")
-						print("se va a buscar en la lista de diccionarios")
+						printV("la rama es un string")
+						printV("se va a buscar en la lista de diccionarios")
 						diccionario_aux = deque([])
 						valores_aux = deque([])
 						diccionario = None
@@ -1845,16 +1850,16 @@ def decorateTree(node):
 							diccionario_aux.append(diccionario)
 							valores_aux.append(valores)
 							if str(node.children[i]) in diccionario.keys(): #Si esta en algun diccionario
-								print("está en un diccionario")
+								printV("está en un diccionario")
 								Revised = True
 								if diccionario[str(node.children[i])]!="int":
-									print("ERROR: no es entero")
+									printV("ERROR: no es entero")
 									errortype.append(diccionario[str(node.children[i])])
 									errores_contexto.append("Error: La expresión luego de "+__getWordFromForCicle__(i)+" no es de tipo entero, es de tipo "+diccionario[str(node.children[i])]+"; linea No. "+ str(node.linea) + ".")
 								else:
-									print("puede ser entero")
+									printV("puede ser entero")
 									if valores[str(node.children[i])]=="None" or valores[str(node.children[i])]==None or "None" in valores[str(node.children[i])]:
-										print("ERROR: es None")
+										printV("ERROR: es None")
 										errortype.append(diccionario[str(node.children[i])])
 										errores_contexto.append("Error: La expresión luego de "+__getWordFromForCicle__(i)+" es de tipo entero, pero no fue inicializada; linea No. "+ str(node.linea) + ".")
 									else:
@@ -1899,16 +1904,16 @@ def decorateTree(node):
 				backup_lista_values_aux=lista_values_aux.copy()
 				lista_diccionarios_aux.append(diccionario)
 				lista_values_aux.append(valores)
-				print("comienza el ciclo con la var de contro igual a "+str(start))
+				printV("comienza el ciclo con la var de contro igual a "+str(start))
 				i = start
 				while i <= stop:
-					print("la var de control tiene valor "+str(i))
+					printV("la var de control tiene valor "+str(i))
 					valores[str(node.children[0])] = i
 					decorateTree(node.children[len(node.children)-1])
-					print(lista_diccionarios_aux)
-					print(lista_values_aux)
+					printV(lista_diccionarios_aux)
+					printV(lista_values_aux)
 					if errorFor:
-						print("hay un error de for")
+						printV("hay un error de for")
 						break
 					i+=step
 				if not errorFor:
@@ -1917,9 +1922,9 @@ def decorateTree(node):
 					valores = lista_values_aux.popleft()
 					lista_values.append(valores)
 				else:
-					print("recuperando la lista, se substituye con ")
-					print(backup_lista_diccionarios_aux)
-					print(backup_lista_values_aux)
+					printV("recuperando la lista, se substituye con ")
+					printV(backup_lista_diccionarios_aux)
+					printV(backup_lista_values_aux)
 					while lista_diccionarios_aux:
 						diccionario = lista_diccionarios_aux.popleft()
 						valores = lista_values_aux.popleft()
@@ -1929,18 +1934,18 @@ def decorateTree(node):
 						lista_diccionarios_aux.append(diccionario)
 						lista_values_aux.append(valores)
 					errorFor=False
-				print("termina el ciclo for")
-				print(lista_diccionarios_aux)
-				print(lista_values_aux)
+				printV("termina el ciclo for")
+				printV(lista_diccionarios_aux)
+				printV(lista_values_aux)
 				return
 				
 			if len(node.children)>0 and isinstance(node.children[0],Node) and "declaracion" in node.children[0].type:
-				print("creando tabla de simbolos")
+				printV("creando tabla de simbolos")
 				node.children[0].adjuntarTablaSimbolos()
 				if len(node.children)>1 and isinstance(node.children[1],Node):
-					print("decorando el arbol")
+					printV("decorando el arbol")
 					decorateTree(node.children[1])
-				print("sacando el diccionario de este bloque with")
+				printV("sacando el diccionario de este bloque with")
 				diccionario=lista_diccionarios_aux.popleft()
 				lista_diccionarios.append(diccionario)
 				valores = lista_values_aux.popleft()
@@ -1949,19 +1954,20 @@ def decorateTree(node):
 			else:
 				for child in node.children:
 					decorateTree(child)		
-		node.calc_tipo(False)
+		if "secuencia" not in node.type:
+			node.calc_tipo(False)
 
 def decorateTreeDeclaracion(node):
 	if node==None:
 		return
 	if isinstance(node,Node):
-		print(node.type)
+		printV(node.type)
 		if len(node.children)!=0:
 			for child in node.children:
 				decorateTreeDeclaracion(child)		
 		node.calc_tipo(True)
 	else:
-		print(node)
+		printV(node)
 
 def fixLineaNodeAsignacion(node):
 	if node==None:
@@ -2001,22 +2007,24 @@ if print_tokens_or_errors()==0: ####Falta formato de errores
 	if p=="":
 		print("No se ha generado el árbol.")
 	else:
-		if len(sys.argv)>2 and sys.argv[2]=="-b":
-			pass
-			print(x)
+		if len(sys.argv)>2 and sys.argv[2]=="-v":
+			verboso = True
+		#print(p)
+		#print(x)
+		decorateTree(y)
+		redeclaracion()
+		if len(errores_contexto)!=0:
+			#errores_contexto.reverse()
+			for error in errores_contexto:
+				print(error)
 		else:
-			#print(p)
-			print(x)
-			decorateTree(y)
+			print("DICCIONARIO DE TIPOS")
 			print(lista_diccionarios)
+			print("\nDICCIONARIO DE VALORES")
 			print(lista_values)
-			print(lista_repetidas_aux)
-			redeclaracion()
+			print(" ")
+			#print(lista_repetidas_aux)
 			p = buildtree(y)
 			#print(p)
 			x = buildtree2(y)
 			print(x)
-			if len(errores_contexto)!=0:
-				#errores_contexto.reverse()
-				for error in errores_contexto:
-					print(error)

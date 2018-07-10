@@ -3,10 +3,10 @@ with
     var z : array[3] of int
     var b : array[3] of int
 begin
-    p<- -1;
+    p<- 5;
     z[0] <- 2;
     z[1] <- 3;
-    z[2] <- 4;
+    z[2] <- true;
     z[p] <- 4;
     b <- $z;
     n <- i + z[0];
