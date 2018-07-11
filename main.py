@@ -405,9 +405,15 @@ def __checkReturnArrayElement__(node):
 	tipeofarray = detailsfromDeclaration.pop()
 	printV("Los detalles obtenidos de la declaracion son "+str(detailsfromDeclaration))
 	for i in range(len(detailsArrayElement)):
-		if detailsArrayElement[i] >= detailsfromDeclaration[i] or detailsArrayElement[i]<0:
+		if detailsArrayElement[i]!=None and (detailsArrayElement[i] >= detailsfromDeclaration[i] or detailsArrayElement[i]<0):
 			printV("Index del array out of range.")
 			errores_contexto.append("Error: Index \""+str(aux[i+1])+"\" fuera de rango. Linea No. "+str(node.linea)+".")
+			for p in errores_contexto:
+				print(p)
+			exit()
+		elif detailsArrayElement[i]==None:
+			printV("Acceder en array no puede realizarse con variable de tipo None.")
+			errores_contexto.append("Error: Index de tipo \"None\". Linea No. "+str(node.linea)+".")
 			for p in errores_contexto:
 				print(p)
 			exit()
@@ -637,6 +643,8 @@ class Node:
 		printV(diccionario)
 		printV("values")
 		printV(values)
+		printV("repetidas")
+		printV(repetidas)
 		return diccionario,repetidas,values
 
 	def calc_tipo(self,isDeclaracion):
@@ -1974,11 +1982,10 @@ def fixLineaNodeAsignacion(node):
 		return
 	if isinstance(node,Node):
 		if "asignacion" in node.type:
-			if node.linea == 0:
-				for child in node.children:
-					if isinstance(child,Node):
-						node.linea = child.linea
-						return
+			for child in node.children:
+				if isinstance(child,Node) and (node.linea == 0 or child.linea<node.linea):
+					node.linea = child.linea
+					return
 		for child in node.children:
 			if isinstance(child,Node) and "asignacion" in child.type and child.linea==0:
 				if "comienzo" in node.type:
@@ -2010,7 +2017,7 @@ if print_tokens_or_errors()==0: ####Falta formato de errores
 		if len(sys.argv)>2 and sys.argv[2]=="-v":
 			verboso = True
 		#print(p)
-		#print(x)
+		printV(x)
 		decorateTree(y)
 		redeclaracion()
 		if len(errores_contexto)!=0:
@@ -2023,7 +2030,6 @@ if print_tokens_or_errors()==0: ####Falta formato de errores
 			print("\nDICCIONARIO DE VALORES")
 			print(lista_values)
 			print(" ")
-			#print(lista_repetidas_aux)
 			p = buildtree(y)
 			#print(p)
 			x = buildtree2(y)
