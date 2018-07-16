@@ -1,0 +1,8 @@
+with 
+   var i<-0,j<-1 : int
+begin
+    while j ->
+        print j;
+        j <- j + 1;
+    end
+end

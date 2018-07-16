@@ -1,0 +1,4 @@
+with var num: int
+begin
+    num <- true + 42;
+end

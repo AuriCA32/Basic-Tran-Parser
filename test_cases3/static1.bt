@@ -1,0 +1,15 @@
+with 
+    var p : array [2+3] of array [4] of int
+    var i : int 
+begin
+    print i;
+    with
+    	var i : bool
+    	var p,q : bool
+    begin
+    	p <- true;    
+        i <- 5 >= 4-3;
+	    read y4;
+        print 4*34;
+    end
+end

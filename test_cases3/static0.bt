@@ -1,0 +1,7 @@
+begin    
+    begin
+        p <- not p /\ not q \/ r;
+		x <- (2)%(3);
+	    y <- (true)/\(not(p));
+    end
+end

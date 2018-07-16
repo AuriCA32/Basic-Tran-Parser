@@ -1,0 +1,10 @@
+A continuacion una lista de errores (corta) a evaluar:
+
+errores de casos de prueba:
+
+caso estatico 0) Prueba de variable no declarada.
+caso estatico 1) Prueba de tipo (variable en alcance previo).
+caso estatico 2) Prueba de error de tipo (en guardia)
+caso estatico 3) Prueba de error de tipo (expresion aritmetica).
+
+caso bien) todo bien \o/

@@ -1,0 +1,15 @@
+with 
+    var r, p, y, q : bool
+    var x : int
+begin
+    with
+        var y: bool    
+    begin
+        
+        x <- 42;
+        r <- true;
+        p <- false;
+
+    end
+    p <- r;
+end
