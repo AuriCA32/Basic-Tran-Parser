@@ -776,7 +776,8 @@ class Node:
 
 		if "asignacion" in self.type and (value_hijo[0]=="None" or value_hijo[0]==None) and (value_hijo[1]=="None" or value_hijo[1]==None):
 			if isinstance(self.children[i],Node):
-				errores_contexto.append("Error: Variable en nodo de tipo \""+str(self.children[i].type)+"\" no inicializada, línea "+str(self.linea)+".")
+				pass
+				#errores_contexto.append("Error: Variable en nodo de tipo \""+str(self.children[i].type)+"\" no inicializada, línea "+str(self.linea)+".")
 			else:
 				errores_contexto.append("Error: Variable \""+str(self.children[i])+"\" no inicializada, línea "+str(self.linea)+".")
 			for p in errores_contexto:
