@@ -279,20 +279,28 @@ def __getVarType__(node):
 # 	[i,j,,k...,type] con i,j,k... enteros y type = ("bool"|"int"|"char")
 def __getListArrayType__(node):
 	types = []
+	printV("Lo que llevo: "+str(types))
 	if isinstance(node,Node):
+		printV("El nodo es de tipo "+str(node.type))
 		y = buildtree(node)
-		types.append(node.children[len(node.children)-2])
+		if isinstance(node.children[len(node.children)-2],Node):
+			types.append(node.children[len(node.children)-2].value)
+		else:	
+			types.append(node.children[len(node.children)-2])
 		temp = __getListArrayType__(node.children[len(node.children)-1])
 		for i in temp:
 			types.append(i)
 	else:
+		printV("El nodo es "+str(node))
 		types.append(node)
 	return types
 
 # Retorna la dimensión y tipo del array en un string con el formato:
 # 	[i][j][k]...(type) con i,j,k... enteros y type = ("bool"|"int"|"char")
 def __getArrayTypeString__(node):
+	printV("Consiguiendo el string de tipo de array")
 	types = __getListArrayType__(node)
+	printV(types)
 	return __getArrayTypeStringAux__(types)
 
 def __getArrayTypeStringAux__(types):
@@ -301,7 +309,7 @@ def __getArrayTypeStringAux__(types):
 		if isinstance(i,int):
 			string+="["+str(i)+"]"
 		else:
-			string+="("+i+")"
+			string+="("+str(i)+")"
 	return string
 
 # Dada la declaración de un arreglo dado en formato string como en la
@@ -315,6 +323,11 @@ def __getArrayFromDeclaration__(node):
 		i = types[p]
 		tempArray = []
 		if isinstance(i,int):
+			if i<0:
+				errores_contexto.append("Error: Índice de arreglo negativo. Línea No. "+str(node.linea)+". Abortando.")
+				for p in errores_contexto:
+					print(p)
+				exit()
 			for m in range(i):
 				tempArray.append(None)
 			if finalArray==[]:
@@ -592,7 +605,10 @@ class Node:
 						decorateTreeDeclaracion(self.children[1])
 						y = buildtree(self.children[1])
 						printV(y)
-						values[str(self.children[0])]=self.children[1].value
+						if "declaracionArray" in self.type:
+							values[str(self.children[0])]=__getArrayFromDeclaration__(self)
+						else:
+							values[str(self.children[0])]=self.children[1].value
 					else:
 						printV("el segundo nodo es un terminal")
 						if "declaracionArray" in self.type:
@@ -637,6 +653,7 @@ class Node:
 									diccionario[str(node.children[0])]="bool"
 								else:
 									diccionario[str(node.children[0])]="char"
+							diccionario[str(node.children[0])]=__getVarType__(self.children[1])
 		printV("salio")
 		__fixBoolValuesInDict__(diccionario, values)
 		printV("diccionario")
@@ -683,13 +700,13 @@ class Node:
 					type_hijo.append("char")
 				else: 
 					if not isDeclaracion:
-						printV("Buscando "+self.children[i] + "en el diccionario")
+						printV("Buscando "+self.children[i] + " en el diccionario")
 						printV(lista_diccionarios_aux)
 						#Buscamos en la tabla de simbolos la variable 
 						declarada=False
 						while lista_diccionarios_aux and lista_values_aux:
-							diccionario=lista_diccionarios_aux.popleft()
-							valores=lista_values_aux.popleft()
+							diccionario=lista_diccionarios_aux.pop()
+							valores=lista_values_aux.pop()
 							diccionario_aux.append(diccionario)
 							valores_aux.append(valores)
 							if str(self.children[i]) in diccionario.keys(): #Si esta en algun diccionario
@@ -747,11 +764,24 @@ class Node:
 		#Si el value de algun hijo es None, no se puede realizar la operacion
 		for i in range(len(value_hijo)):
 			hijo = value_hijo[i]
-			if (hijo=="None" or hijo==None) and "asignacion" not in self.type:
-				errores_contexto.append("Error: Variable \""+str(value_hijo[i])+"\" no inicializada, línea "+str(self.linea)+".")
+			if (hijo=="None" or hijo==None) and "asignacion" not in self.type and "igual" not in self.type:
+				if isinstance(self.children[i],Node):
+					pass
+					#errores_contexto.append("Error: Variable en nodo de tipo \""+str(self.children[i].type)+"\" no inicializada, línea "+str(self.linea)+".")
+				else:
+					errores_contexto.append("Error: Variable \""+str(self.children[i])+"\" no inicializada, línea "+str(self.linea)+".")
 				for p in errores_contexto:
 					print(p)
 				exit()
+
+		if "asignacion" in self.type and (value_hijo[0]=="None" or value_hijo[0]==None) and (value_hijo[1]=="None" or value_hijo[1]==None):
+			if isinstance(self.children[i],Node):
+				errores_contexto.append("Error: Variable en nodo de tipo \""+str(self.children[i].type)+"\" no inicializada, línea "+str(self.linea)+".")
+			else:
+				errores_contexto.append("Error: Variable \""+str(self.children[i])+"\" no inicializada, línea "+str(self.linea)+".")
+			for p in errores_contexto:
+				print(p)
+			exit()
 		
 		if len(type_hijo)==2: #operaciones y arreglo sin shift
 
@@ -1057,7 +1087,6 @@ class Node:
 						lista_diccionarios_aux.append(diccionario)
 						lista_values_aux.append(valores)
 					return
-
 			else:
 				if isDeclaracion:
 					return
@@ -1738,7 +1767,7 @@ def decorateTree(node):
 				else:
 					printV("Error accediendo en el arreglo.")
 				return
-			if "condicional" in node.type:
+			elif "condicional" in node.type:
 				printV("el nodo es un condicional")
 				decorateTree(node.children[0])
 				tiporesult = None
@@ -1766,7 +1795,7 @@ def decorateTree(node):
 					valresultante = node.children[0].value
 				printV("el valor de la variable es "+ str(valresultante))
 				if tiporesult!="bool":
-					errores_contexto.append("Error: La expresión en el \"while\" tiene que ser de tipo bool, pero se encontró "+str(tiporesult)+". Linea No. "+str(node.linea)+".")
+					errores_contexto.append("Error: La expresión en el \"if\" tiene que ser de tipo bool, pero se encontró "+str(tiporesult)+". Linea No. "+str(node.linea)+".")
 					return
 				if tiporesult=="bool" and (valresultante ==None or valresultante=="None"):
 					errores_contexto.append("Error: variable no inicializada. Linea No. "+str(node.linea)+".")
@@ -1780,7 +1809,7 @@ def decorateTree(node):
 							printV("el nodo es un condicional")
 							decorateTree(node.children[2])
 					return
-			if "while" in node.type:
+			elif "while" in node.type:
 				printV("el nodo es un while")
 				decorateTree(node.children[0])
 				tiporesult = None
@@ -1829,7 +1858,7 @@ def decorateTree(node):
 						numrecursions+=1
 					printV("salio del while")
 					return
-			if "for" in node.type:
+			elif "for" in node.type:
 				printV("ciclo for")
 				y=buildtree(node)
 				printV(y)
@@ -1852,9 +1881,13 @@ def decorateTree(node):
 						valores = None
 						Revised = False
 						# Se busca en la lista de diccionarios
+						printV(lista_diccionarios_aux)
+						printV(lista_values_aux)
 						while lista_diccionarios_aux and lista_values_aux:
 							diccionario=lista_diccionarios_aux.popleft()
 							valores=lista_values_aux.popleft()
+							printV("diccionario"+str(diccionario))
+							printV("valores"+str(valores))
 							diccionario_aux.append(diccionario)
 							valores_aux.append(valores)
 							if str(node.children[i]) in diccionario.keys(): #Si esta en algun diccionario
@@ -1866,7 +1899,7 @@ def decorateTree(node):
 									errores_contexto.append("Error: La expresión luego de "+__getWordFromForCicle__(i)+" no es de tipo entero, es de tipo "+diccionario[str(node.children[i])]+"; linea No. "+ str(node.linea) + ".")
 								else:
 									printV("puede ser entero")
-									if valores[str(node.children[i])]=="None" or valores[str(node.children[i])]==None or "None" in valores[str(node.children[i])]:
+									if valores[str(node.children[i])]=="None" or valores[str(node.children[i])]==None or "None" in str(valores[str(node.children[i])]):
 										printV("ERROR: es None")
 										errortype.append(diccionario[str(node.children[i])])
 										errores_contexto.append("Error: La expresión luego de "+__getWordFromForCicle__(i)+" es de tipo entero, pero no fue inicializada; linea No. "+ str(node.linea) + ".")
@@ -1879,6 +1912,8 @@ def decorateTree(node):
 							valores=valores_aux.popleft()
 							lista_diccionarios_aux.append(diccionario)
 							lista_values_aux.append(valores)
+						printV(lista_diccionarios_aux)
+						printV(lista_values_aux)
 						if not Revised: # No se encuentra en el diccionario
 							if node.children[i]=="true" or node.children[i]=="false":
 								errortype.append("bool")
@@ -1929,6 +1964,12 @@ def decorateTree(node):
 					lista_diccionarios.append(diccionario)
 					valores = lista_values_aux.popleft()
 					lista_values.append(valores)
+					while lista_diccionarios:
+						diccionario=lista_diccionarios.popleft()
+						valores = lista_values.popleft()
+						if "IsAForCicle" not in diccionario.keys():
+							lista_diccionarios_aux.append(diccionario)
+							lista_values_aux.append(valores)
 				else:
 					printV("recuperando la lista, se substituye con ")
 					printV(backup_lista_diccionarios_aux)
@@ -1947,7 +1988,7 @@ def decorateTree(node):
 				printV(lista_values_aux)
 				return
 				
-			if len(node.children)>0 and isinstance(node.children[0],Node) and "declaracion" in node.children[0].type:
+			elif len(node.children)>0 and isinstance(node.children[0],Node) and "declaracion" in node.children[0].type:
 				printV("creando tabla de simbolos")
 				node.children[0].adjuntarTablaSimbolos()
 				if len(node.children)>1 and isinstance(node.children[1],Node):
@@ -1962,7 +2003,7 @@ def decorateTree(node):
 			else:
 				for child in node.children:
 					decorateTree(child)		
-		if "secuencia" not in node.type:
+		if "secuencia" not in node.type and "print" not in node.type and "read" not in node.type:
 			node.calc_tipo(False)
 
 def decorateTreeDeclaracion(node):
